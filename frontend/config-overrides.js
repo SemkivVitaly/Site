@@ -48,16 +48,6 @@ module.exports = function override(config, env) {
     });
   }
 
-  // Отключить минификацию и удалить minimizer для production, чтобы избежать проблем с ajv-formats
-  if (env === 'production' && config.optimization) {
-    // Отключаем минификацию полностью
-    config.optimization.minimize = false;
-    // Удаляем minimizer массив, чтобы TerserPlugin не использовался
-    if (config.optimization.minimizer) {
-      config.optimization.minimizer = [];
-    }
-  }
-
   return config;
 };
 
