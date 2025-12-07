@@ -4,7 +4,7 @@ nixPkgs = ["nodejs-18_x"]
 [phases.install]
 cmds = [
   "npm install --legacy-peer-deps",
-  "npm install ajv@6.12.6 ajv-keywords@3.5.2 ajv-formats@1.4.0 --legacy-peer-deps --save-exact"
+  "npm install ajv@^8.12.0 ajv-keywords@^5.1.0 ajv-formats@^2.1.1 --legacy-peer-deps --save"
 ]
 
 [phases.build]
