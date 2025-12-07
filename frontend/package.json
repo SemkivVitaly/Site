@@ -65,5 +65,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "ajv": "^6.12.6"
+  },
+  "resolutions": {
+    "ajv": "^6.12.6"
   }
 }
