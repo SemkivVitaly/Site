@@ -18,5 +18,10 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "overrides": {
+    "schema-utils": "3.1.1",
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2"
+  }
 }
