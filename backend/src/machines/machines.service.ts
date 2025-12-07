@@ -12,7 +12,7 @@ export interface CreateMachineDto {
 
 export interface UpdateMachineDto {
   name?: string;
-  photoUrl?: string;
+  photoUrl?: string | null;
   status?: MachineStatus;
   efficiencyNorm?: number;
   quantity?: number;

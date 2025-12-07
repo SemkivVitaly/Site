@@ -90,10 +90,10 @@ export class AuthService {
   }
 
   generateToken(payload: AuthPayload): string {
-    const secret = process.env.JWT_SECRET || 'default-secret-change-in-production';
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const secret: string = process.env.JWT_SECRET || 'default-secret-change-in-production';
+    const expiresIn: string = process.env.JWT_EXPIRES_IN || '7d';
 
-    return jwt.sign(payload, secret, { expiresIn });
+    return jwt.sign(payload, secret, { expiresIn } as jwt.SignOptions);
   }
 
   verifyToken(token: string): AuthPayload {
