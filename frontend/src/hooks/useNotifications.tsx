@@ -34,7 +34,14 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!token || !user) return;
 
-    const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+    // Socket.io работает на корневом домене, без /api
+    const getSocketUrl = () => {
+      const envUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // Убираем /api если есть
+      return envUrl.replace(/\/api\/?$/, '');
+    };
+
+    const newSocket = io(getSocketUrl(), {
       auth: { token },
     });
 

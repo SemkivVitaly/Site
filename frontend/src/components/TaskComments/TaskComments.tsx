@@ -30,8 +30,15 @@ const TaskComments: React.FC<TaskCommentsProps> = ({ taskId }) => {
     loadComments();
 
     // Subscribe to real-time updates
+    // Socket.io работает на корневом домене, без /api
+    const getSocketUrl = () => {
+      const envUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // Убираем /api если есть
+      return envUrl.replace(/\/api\/?$/, '');
+    };
+
     const token = localStorage.getItem('token');
-    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+    const socket = io(getSocketUrl(), {
       auth: { token },
     });
 
