@@ -1,4 +1,4 @@
-// Конфигурация для отключения предупреждений source-map-loader
+// Конфигурация для отключения предупреждений source-map-loader и fork-ts-checker-webpack-plugin
 module.exports = function override(config, env) {
   // Найти правило source-map-loader и исключить node_modules
   config.module.rules.forEach((rule) => {
@@ -17,6 +17,13 @@ module.exports = function override(config, env) {
       });
     }
   });
+
+  // Отключить fork-ts-checker-webpack-plugin для избежания проблем с schema-utils
+  if (config.plugins) {
+    config.plugins = config.plugins.filter(
+      (plugin) => !plugin.constructor || plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
+    );
+  }
 
   return config;
 };
