@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "ERP система для типографии",
   "private": true,
-  "main": "backend/dist/index.js",
   "workspaces": [
     "frontend",
     "backend"
@@ -14,12 +13,7 @@
     "dev:frontend": "cd frontend && npm start",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "start": "node backend/scripts/migrate-and-start.js",
-    "postinstall": "cd backend && npm run prisma:generate || echo Prisma generate failed, run it manually",
-    "db:migrate": "cd backend && npx prisma migrate deploy",
-    "db:generate": "node backend/scripts/regenerate-prisma.js",
-    "fix:prisma": "node backend/scripts/regenerate-prisma.js"
+    "build:frontend": "cd frontend && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

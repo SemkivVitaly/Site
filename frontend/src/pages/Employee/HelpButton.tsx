@@ -4,6 +4,7 @@ import {
   Paper,
   Typography,
   Button,
+  Box,
   TextField,
   FormControl,
   InputLabel,
@@ -16,9 +17,11 @@ import { IncidentType } from '../../types';
 import { machinesApi, Machine } from '../../api/machines.api';
 import { tasksApi } from '../../api/tasks.api';
 import { ProductionTask } from '../../api/production.api';
+import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const HelpButton: React.FC = () => {
+  const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
   const [type, setType] = useState<IncidentType>(IncidentType.TASK_QUESTION);
   const [title, setTitle] = useState('');

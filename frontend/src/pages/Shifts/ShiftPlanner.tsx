@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -16,12 +16,15 @@ import ShiftDetails from './ShiftDetails';
 
 const ShiftPlanner: React.FC = () => {
   const [calendar, setCalendar] = useState<Record<string, Shift[]>>({});
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [users, setUsers] = useState<User[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    loadData();
+  }, [currentMonth]);
+
+  const loadData = async () => {
     try {
       const start = startOfMonth(currentMonth);
       const end = endOfMonth(currentMonth);
@@ -37,11 +40,7 @@ const ShiftPlanner: React.FC = () => {
     } catch (error) {
       console.error('Failed to load data:', error);
     }
-  }, [currentMonth]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   const days = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -53,7 +52,6 @@ const ShiftPlanner: React.FC = () => {
     return calendar[dateKey] || [];
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getShiftCount = (date: Date): number => {
     return getShiftsForDate(date).length;
   };

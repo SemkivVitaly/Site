@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  Container,
   Typography,
   Box,
   Paper,
   List,
   ListItem,
+  ListItemText,
   Button,
   Chip,
   Dialog,
@@ -39,7 +41,11 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
   const [workLogsDialogOpen, setWorkLogsDialogOpen] = useState(false);
   const [selectedShiftForWorkLogs, setSelectedShiftForWorkLogs] = useState<{ shiftId: string; userName: string } | null>(null);
 
-  const loadShifts = useCallback(async () => {
+  useEffect(() => {
+    loadShifts();
+  }, [date]);
+
+  const loadShifts = async () => {
     try {
       setLoading(true);
       const dateKey = format(date, 'yyyy-MM-dd');
@@ -108,16 +114,11 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [date]);
-
-  useEffect(() => {
-    loadShifts();
-  }, [loadShifts]);
+  };
 
   const isFutureDate = date > new Date();
   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getShiftDuration = (shift: Shift): string => {
     if (!shift.timeIn || !shift.timeOut) return '-';
     
@@ -174,7 +175,6 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
             <List>
               {shifts.map((shift) => {
                 const efficiency = efficiencyData[shift.id];
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const tasksCount = efficiency?.workLogsCount || 0;
                 const avgEfficiency = efficiency?.efficiency || 0;
 

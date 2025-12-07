@@ -222,7 +222,7 @@ export class IncidentsService {
             { role: 'MANAGER' }, // Managers can also help
           ],
         },
-        select: { id: true, role: true, tags: true },
+        select: { id: true, tags: true },
       });
 
       // Filter users with "Настройщик" tag

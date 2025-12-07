@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -8,6 +8,7 @@ import {
   Box,
   List,
   ListItem,
+  ListItemText,
   IconButton,
   Dialog,
   DialogTitle,
@@ -53,12 +54,18 @@ const TechCardBuilder: React.FC = () => {
   });
   const [useCustomOperation, setUseCustomOperation] = useState(false);
 
+  useEffect(() => {
+    if (orderId) {
+      loadData();
+    }
+  }, [orderId]);
+
   const getMachineCapabilities = (machineId: string): string[] => {
     const machine = machines.find((m) => m.id === machineId);
     return machine?.capabilities || [];
   };
 
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     try {
       const [orderData, tasksData, machinesData, employeesData] = await Promise.all([
         ordersApi.getById(orderId!),
@@ -75,13 +82,7 @@ const TechCardBuilder: React.FC = () => {
       showError(error.response?.data?.error || 'Ошибка загрузки данных');
       navigate('/orders');
     }
-  }, [orderId, showError, navigate]);
-
-  useEffect(() => {
-    if (orderId) {
-      loadData();
-    }
-  }, [orderId, loadData]);
+  };
 
   const handleOpen = (task?: ProductionTask) => {
     if (task) {

@@ -1,7 +1,17 @@
 import axios from 'axios';
 import { addToQueue } from '../utils/offlineQueue';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Получаем базовый URL API из переменных окружения
+// Если REACT_APP_API_URL не содержит /api, добавляем его
+const getApiUrl = () => {
+  const envUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // Убираем завершающий слэш если есть
+  const cleanUrl = envUrl.endsWith('/') ? envUrl.slice(0, -1) : envUrl;
+  // Добавляем /api если его нет
+  return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+};
+
+const API_URL = getApiUrl();
 
 const client = axios.create({
   baseURL: API_URL,

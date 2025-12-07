@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
   Button,
+  Paper,
   Typography,
   Grid,
   Card,
@@ -29,7 +30,11 @@ const EmployeeDashboard: React.FC = () => {
   const [currentShift, setCurrentShift] = useState<Shift | null>(null);
   const [activeWorkLog, setActiveWorkLog] = useState<WorkLog | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
     try {
       const [shift, workLog] = await Promise.all([
         shiftsApi.getCurrentShift(),
@@ -40,11 +45,7 @@ const EmployeeDashboard: React.FC = () => {
     } catch (error) {
       // Ошибка загрузки данных - игнорируем для неавторизованных пользователей
     }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  };
 
   const handleLunch = async (action: 'start' | 'end') => {
     try {
@@ -56,7 +57,6 @@ const EmployeeDashboard: React.FC = () => {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleNoLunch = async () => {
     try {
       await shiftsApi.markNoLunch();

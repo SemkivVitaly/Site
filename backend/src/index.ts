@@ -12,17 +12,61 @@ dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
+// Разрешаем запросы с localhost для разработки и с production URL
+const socketIoOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Разрешаем запросы без origin
+      if (!origin) return callback(null, true);
+      
+      // Всегда разрешаем localhost для разработки
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        return callback(null, true);
+      }
+      
+      // Разрешаем указанные origins
+      if (socketIoOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
 });
 
 // Middleware
+// Разрешаем запросы с localhost для разработки и с production URL
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Разрешаем запросы без origin (например, мобильные приложения или Postman)
+    if (!origin) return callback(null, true);
+    
+    // Всегда разрешаем localhost для разработки
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    // Разрешаем указанные origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -78,25 +122,11 @@ import { setupSocketHandlers } from './socket/socket.handler';
 setupSocketHandlers(io);
 
 // Start server
-const PORT = parseInt(process.env.PORT || '5000', 10);
-const HOST = process.env.HOST || '0.0.0.0';
+const PORT = process.env.PORT || 5000;
 
-// Validate required environment variables
-if (!process.env.DATABASE_URL) {
-  logger.error('❌ DATABASE_URL environment variable is not set!');
-  logger.error('Please set DATABASE_URL in your environment variables.');
-  process.exit(1);
-}
-
-if (!process.env.JWT_SECRET) {
-  logger.warn('⚠️  JWT_SECRET environment variable is not set. Using default (NOT SECURE FOR PRODUCTION)');
-}
-
-httpServer.listen(PORT, HOST, () => {
-  logger.info(`✅ Server running on ${HOST}:${PORT}`);
-  logger.info(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-  logger.info(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
+httpServer.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Graceful shutdown

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -21,7 +21,7 @@ import {
   Box,
 } from '@mui/material';
 import { Add, Edit, Delete, Warning } from '@mui/icons-material';
-import { materialsApi, Material, CreateMaterialDto } from '../../api/materials.api';
+import { materialsApi, Material, CreateMaterialDto, UpdateMaterialDto } from '../../api/materials.api';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const MaterialsManagement: React.FC = () => {
@@ -37,7 +37,11 @@ const MaterialsManagement: React.FC = () => {
     minStock: 0,
   });
 
-  const loadMaterials = useCallback(async () => {
+  useEffect(() => {
+    loadMaterials();
+  }, []);
+
+  const loadMaterials = async () => {
     try {
       const [allMaterials, lowStock] = await Promise.all([
         materialsApi.getAll(),
@@ -49,11 +53,7 @@ const MaterialsManagement: React.FC = () => {
       console.error('Failed to load materials:', error);
       showError(error.response?.data?.error || 'Ошибка загрузки материалов');
     }
-  }, [showError]);
-
-  useEffect(() => {
-    loadMaterials();
-  }, [loadMaterials]);
+  };
 
   const handleOpen = (material?: Material) => {
     if (material) {

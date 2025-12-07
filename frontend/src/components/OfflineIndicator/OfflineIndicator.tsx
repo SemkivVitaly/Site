@@ -3,16 +3,19 @@ import { Alert, Snackbar } from '@mui/material';
 import { processQueue } from '../../utils/offlineQueue';
 
 const OfflineIndicator: React.FC = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showOffline, setShowOffline] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
+      setIsOnline(true);
       setShowOffline(false);
       // Process queued actions when coming back online
       processQueue();
     };
 
     const handleOffline = () => {
+      setIsOnline(false);
       setShowOffline(true);
     };
 

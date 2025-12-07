@@ -7,13 +7,12 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "init:db": "node scripts/init-db.js",
-    "create:admin": "node scripts/create-admin.js",
-    "postinstall": "prisma generate"
+    "create:admin": "node scripts/create-admin.js"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

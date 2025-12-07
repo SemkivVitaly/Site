@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { DatePicker } from '@mui/x-date-pickers';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isFuture, startOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isFuture, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { shiftsApi, Shift } from '../../api/shifts.api';
 import { analyticsApi } from '../../api/analytics.api';
@@ -71,7 +71,17 @@ const EmployeeStats: React.FC = () => {
   const [planningShift, setPlanningShift] = useState(false);
   const [cancellingShift, setCancellingShift] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (tab === 2) {
+      loadCalendar();
+    }
+  }, [tab, currentMonth]);
+
+  const loadData = async () => {
     try {
       setLoading(true);
       const now = new Date();
@@ -112,9 +122,9 @@ const EmployeeStats: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
 
-  const loadCalendar = useCallback(async () => {
+  const loadCalendar = async () => {
     try {
       const start = startOfMonth(currentMonth);
       const end = endOfMonth(currentMonth);
@@ -126,17 +136,7 @@ const EmployeeStats: React.FC = () => {
     } catch (error) {
       console.error('Failed to load calendar:', error);
     }
-  }, [currentMonth]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    if (tab === 2) {
-      loadCalendar();
-    }
-  }, [tab, currentMonth, loadCalendar]);
+  };
 
   // Проверяет, является ли выбранная дата прошедшей (без учета времени)
   const isPastDate = (date: Date | null): boolean => {
@@ -257,7 +257,6 @@ const EmployeeStats: React.FC = () => {
     return calendar[dateKey] || [];
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const hasShiftOnDate = (date: Date): boolean => {
     const dateKey = format(date, 'yyyy-MM-dd');
     const dayShifts = calendar[dateKey] || [];
@@ -444,7 +443,6 @@ const EmployeeStats: React.FC = () => {
           {days.map((day) => {
             const dayShifts = getShiftsForDate(day);
             const myShift = dayShifts.find((s) => s.userId === user?.id);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const isPast = day < new Date() && !isToday(day);
             const isFutureDate = isFuture(day) || isToday(day);
 

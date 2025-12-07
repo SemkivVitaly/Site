@@ -26,7 +26,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Add, Edit, Delete, History, PhotoCamera, Delete as DeleteIcon } from '@mui/icons-material';
-import { machinesApi, Machine, CreateMachineDto } from '../../api/machines.api';
+import { machinesApi, Machine, CreateMachineDto, UpdateMachineDto } from '../../api/machines.api';
 import { MachineStatus } from '../../types';
 import { useNotification } from '../../contexts/NotificationContext';
 import { translateMachineStatus } from '../../utils/translations';
@@ -47,6 +47,10 @@ const MachinesManagement: React.FC = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
+  useEffect(() => {
+    loadMachines();
+  }, []);
+
   const loadMachines = useCallback(async () => {
     try {
       setLoading(true);
@@ -59,10 +63,6 @@ const MachinesManagement: React.FC = () => {
       setLoading(false);
     }
   }, [showError]);
-
-  useEffect(() => {
-    loadMachines();
-  }, [loadMachines]);
 
   const handleOpen = (machine?: Machine) => {
     if (machine) {

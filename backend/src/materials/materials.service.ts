@@ -123,14 +123,7 @@ export class MaterialsService {
     // Get task materials
     const taskMaterials = await prisma.taskMaterial.findMany({
       where: { taskId },
-      include: { 
-        material: true,
-        task: {
-          select: {
-            totalQuantity: true,
-          },
-        },
-      },
+      include: { material: true },
     });
 
     // Calculate total quantity needed (produced + defect)

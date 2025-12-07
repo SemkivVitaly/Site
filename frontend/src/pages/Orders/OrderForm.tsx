@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import { ordersApi, CreateOrderDto } from '../../api/orders.api';
+import { ordersApi, CreateOrderDto, UpdateOrderDto } from '../../api/orders.api';
 import { Priority } from '../../types';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -34,7 +34,13 @@ const OrderForm: React.FC = () => {
     isImportant: false,
   });
 
-  const loadOrder = useCallback(async () => {
+  useEffect(() => {
+    if (id) {
+      loadOrder();
+    }
+  }, [id]);
+
+  const loadOrder = async () => {
     try {
       setLoading(true);
       const order = await ordersApi.getById(id!);
@@ -57,13 +63,7 @@ const OrderForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, showError, navigate]);
-
-  useEffect(() => {
-    if (id) {
-      loadOrder();
-    }
-  }, [id, loadOrder]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

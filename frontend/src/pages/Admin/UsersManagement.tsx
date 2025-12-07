@@ -51,6 +51,10 @@ const UsersManagement: React.FC = () => {
     salary: undefined,
   });
 
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -62,10 +66,6 @@ const UsersManagement: React.FC = () => {
       setLoading(false);
     }
   }, [showError]);
-
-  useEffect(() => {
-    loadUsers();
-  }, [loadUsers]);
 
   const handleOpen = (user?: User) => {
     if (user) {

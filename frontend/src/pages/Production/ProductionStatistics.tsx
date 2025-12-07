@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -43,7 +43,11 @@ const ProductionStatistics: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | null>(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState<Date | null>(endOfDay(new Date()));
 
-  const loadStatistics = useCallback(async () => {
+  useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
     try {
       setLoading(true);
       const start = startDate ? format(startDate, 'yyyy-MM-dd') : undefined;
@@ -56,11 +60,7 @@ const ProductionStatistics: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, showError]);
-
-  useEffect(() => {
-    loadStatistics();
-  }, [loadStatistics]);
+  };
 
   const handleApplyFilter = () => {
     loadStatistics();

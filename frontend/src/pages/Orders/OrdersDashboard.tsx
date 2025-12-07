@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -32,7 +32,11 @@ const OrdersDashboard: React.FC = () => {
   const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
 
-  const loadOrders = useCallback(async () => {
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
     try {
       setLoading(true);
       const data = await ordersApi.getAll();
@@ -56,11 +60,7 @@ const OrdersDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showError]);
-
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  };
 
   const handleDeleteOrder = (orderId: string) => {
     const order = orders.find((o) => o.id === orderId);

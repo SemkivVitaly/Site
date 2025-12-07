@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Container,
@@ -22,7 +22,13 @@ const MachineHistory: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [machineName, setMachineName] = useState('');
 
-  const loadHistory = useCallback(async () => {
+  useEffect(() => {
+    if (id) {
+      loadHistory();
+    }
+  }, [id]);
+
+  const loadHistory = async () => {
     try {
       const [machine, incidentsData] = await Promise.all([
         machinesApi.getById(id!),
@@ -33,13 +39,7 @@ const MachineHistory: React.FC = () => {
     } catch (error) {
       console.error('Failed to load history:', error);
     }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      loadHistory();
-    }
-  }, [id, loadHistory]);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

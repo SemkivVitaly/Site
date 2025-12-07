@@ -41,7 +41,7 @@ const QRScanner: React.FC = () => {
         
         if (qrData.type === 'QR_POINT') {
           // Verify QR point exists
-          await qrApi.getQRPointByHash(qrData.hash);
+          const qrPoint = await qrApi.getQRPointByHash(qrData.hash);
           
           // Process QR scan through shifts API
           const { shiftsApi } = await import('../../api/shifts.api');
