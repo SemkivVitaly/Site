@@ -20,9 +20,16 @@ module.exports = function override(config, env) {
 
   // Отключить fork-ts-checker-webpack-plugin для избежания проблем с schema-utils
   if (config.plugins) {
-    config.plugins = config.plugins.filter(
-      (plugin) => !plugin.constructor || plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
-    );
+    config.plugins = config.plugins.filter((plugin) => {
+      // Проверяем по имени конструктора и по строковому представлению
+      const pluginName = plugin.constructor?.name || '';
+      const pluginString = plugin.toString();
+      return (
+        pluginName !== 'ForkTsCheckerWebpackPlugin' &&
+        !pluginString.includes('ForkTsCheckerWebpackPlugin') &&
+        !pluginString.includes('fork-ts-checker')
+      );
+    });
   }
 
   return config;
