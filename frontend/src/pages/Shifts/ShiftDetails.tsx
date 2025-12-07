@@ -116,12 +116,10 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
     loadShifts();
   }, [loadShifts]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getShiftDuration = (shift: Shift): string => {
-
   const isFutureDate = date > new Date();
   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getShiftDuration = (shift: Shift): string => {
     if (!shift.timeIn || !shift.timeOut) return '-';
     
