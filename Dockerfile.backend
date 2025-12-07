@@ -1,0 +1,39 @@
+# Dockerfile для Backend
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Копируем package.json и устанавливаем зависимости
+COPY backend/package*.json ./
+RUN npm ci
+
+# Копируем весь код бэкенда
+COPY backend/ ./
+
+# Генерируем Prisma клиент
+RUN npx prisma generate
+
+# Собираем TypeScript
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Копируем package.json и устанавливаем только production зависимости
+COPY backend/package*.json ./
+RUN npm ci --only=production
+
+# Копируем собранный код и Prisma схему
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Создаем директорию для загрузок
+RUN mkdir -p public/uploads
+
+EXPOSE 5000
+
+CMD ["node", "dist/index.js"]
+

@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum MachineStatus {
+  WORKING
+  REPAIR
+  MAINTENANCE
+  REQUIRES_ATTENTION
+}
+
+enum OrderStatus {
+  NEW
+  IN_QUEUE
+  IN_PROGRESS
+  PARTIALLY_READY
+  READY
+  ISSUED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentType {
+  MACHINE_BREAKDOWN
+  TASK_QUESTION
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum QRPointType {
+  ENTRANCE
+  EXIT
+  BREAK_AREA
+  LUNCH
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole @default(EMPLOYEE)
+  tags          Json?    // ["Настройщик", "Печатник", "Резчик"]
+  qrHash        String?  @unique
+  salary        Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  orders        Order[]           @relation("OrderManager")
+  assignedTasks ProductionTask[]
+  workLogs      WorkLog[]
+  shifts        Shift[]
+  incidents     Incident[]        @relation("IncidentCreator")
+  resolvedIncidents Incident[]    @relation("IncidentResolver")
+  comments      TaskComment[]
+
+  @@index([role])
+}
+
+model Machine {
+  id              String        @id @default(cuid())
+  name            String
+  photoUrl        String?
+  status          MachineStatus @default(WORKING)
+  efficiencyNorm  Float         // шт/час
+  quantity        Int           @default(1) // Количество станков данного типа на производстве
+  capabilities    Json          // ["Печать", "Ламинация", "Резка"]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  tasks     ProductionTask[]
+  incidents Incident[]
+
+  @@index([status])
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  title             String
+  client            String
+  clientContacts    String
+  description       String?
+  referencePhotos   String[]    // URLs
+  printRun          Int         // тираж
+  deadline          DateTime
+  budget            Float?
+  status            OrderStatus @default(NEW)
+  priority          Priority    @default(MEDIUM)
+  isImportant       Boolean     @default(false)
+  estimatedReadyDate DateTime?
+  managerId         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  manager       User            @relation("OrderManager", fields: [managerId], references: [id])
+  tasks         ProductionTask[]
+
+  @@index([deadline])
+  @@index([status])
+  @@index([priority])
+  @@index([isImportant])
+  @@index([managerId])
+}
+
+model ProductionTask {
+  id                String     @id @default(cuid())
+  orderId           String
+  machineId         String
+  assignedUserId    String?
+  status            TaskStatus @default(PENDING)
+  operation         String     // название операции
+  totalQuantity     Int
+  completedQuantity Int        @default(0)
+  defectQuantity    Int        @default(0)
+  priority          Priority   @default(MEDIUM)
+  sequence          Int        // порядок выполнения в техкарте
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  machine     Machine    @relation(fields: [machineId], references: [id])
+  assignedUser User?     @relation(fields: [assignedUserId], references: [id])
+  workLogs    WorkLog[]
+  comments    TaskComment[]
+  materials   TaskMaterial[]
+
+  @@index([orderId])
+  @@index([machineId])
+  @@index([assignedUserId])
+  @@index([status])
+  @@index([priority])
+}
+
+model WorkLog {
+  id                String   @id @default(cuid())
+  taskId            String
+  userId            String
+  startTime         DateTime
+  endTime           DateTime?
+  quantityProduced  Int       @default(0)
+  defectQuantity    Int       @default(0)
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  task ProductionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User           @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([startTime])
+}
+
+model Shift {
+  id          String    @id @default(cuid())
+  userId      String
+  date        DateTime  @db.Date
+  plannedStart DateTime?
+  timeIn      DateTime?
+  timeOut     DateTime?
+  lunchStart  DateTime?
+  lunchEnd    DateTime?
+  isLate      Boolean   @default(false)
+  lunchOvertime Int?    // в минутах
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([date])
+  @@index([userId, date])
+}
+
+model Material {
+  id              String   @id @default(cuid())
+  name            String
+  unit            String   // "шт", "лист", "кг"
+  currentStock    Float    @default(0)
+  minStock        Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  taskMaterials TaskMaterial[]
+}
+
+model TaskMaterial {
+  id          String   @id @default(cuid())
+  taskId      String
+  materialId  String
+  quantity    Float
+  createdAt   DateTime @default(now())
+
+  // Relations
+  task     ProductionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  material Material       @relation(fields: [materialId], references: [id])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task ProductionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User           @relation(fields: [userId], references: [id])
+}
+
+model Incident {
+  id          String         @id @default(cuid())
+  type        IncidentType
+  status      IncidentStatus @default(OPEN)
+  title       String
+  description String?
+  machineId   String?
+  taskId      String?
+  createdById String
+  resolvedById String?
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  machine     Machine?  @relation(fields: [machineId], references: [id])
+  creator     User      @relation("IncidentCreator", fields: [createdById], references: [id])
+  resolver    User?     @relation("IncidentResolver", fields: [resolvedById], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([machineId])
+  @@index([createdById])
+}
+
+model QRPoint {
+  id        String      @id @default(cuid())
+  hash      String      @unique
+  type      QRPointType
+  name      String
+  createdAt DateTime    @default(now())
+}
+
