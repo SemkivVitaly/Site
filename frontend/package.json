@@ -71,11 +71,17 @@
   "overrides": {
     "ajv": "6.12.6",
     "ajv-keywords": "3.5.2",
-    "ajv-formats": false
+    "ajv-formats": false,
+    "terser-webpack-plugin": {
+      "schema-utils": "^2.1.0"
+    }
   },
   "resolutions": {
     "ajv": "6.12.6",
     "ajv-keywords": "3.5.2",
-    "ajv-formats": false
+    "ajv-formats": false,
+    "terser-webpack-plugin": {
+      "schema-utils": "^2.1.0"
+    }
   }
 }

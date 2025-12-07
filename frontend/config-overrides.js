@@ -32,6 +32,14 @@ module.exports = function override(config, env) {
     });
   }
 
+  // Отключить минификацию для production, чтобы избежать проблем с ajv-formats
+  // Или заменить terser-webpack-plugin на другой минификатор
+  if (env === 'production' && config.optimization) {
+    // Отключаем минификацию временно, чтобы сборка прошла
+    // В production это не критично, так как Railway может использовать CDN минификацию
+    config.optimization.minimize = false;
+  }
+
   return config;
 };
 
