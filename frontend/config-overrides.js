@@ -27,13 +27,15 @@ module.exports = function override(config, env) {
       return (
         pluginName !== 'ForkTsCheckerWebpackPlugin' &&
         !pluginString.includes('ForkTsCheckerWebpackPlugin') &&
-        !pluginString.includes('fork-ts-checker')
+        !pluginString.includes('fork-ts-checker') &&
+        pluginName !== 'TerserPlugin' &&
+        !pluginString.includes('TerserPlugin') &&
+        !pluginString.includes('terser-webpack-plugin')
       );
     });
   }
 
   // Отключить минификацию для production, чтобы избежать проблем с ajv-formats
-  // Или заменить terser-webpack-plugin на другой минификатор
   if (env === 'production' && config.optimization) {
     // Отключаем минификацию временно, чтобы сборка прошла
     // В production это не критично, так как Railway может использовать CDN минификацию
