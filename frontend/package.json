@@ -10,9 +10,9 @@
     "@mui/material": "^5.15.1",
     "@mui/x-date-pickers": "^6.19.7",
     "@types/recharts": "^1.8.29",
-    "ajv": "^6.12.6",
-    "ajv-formats": "^1.5.1",
-    "ajv-keywords": "^3.5.2",
+    "ajv": "6.12.6",
+    "ajv-formats": "1.4.0",
+    "ajv-keywords": "3.5.2",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
     "html5-qrcode": "^2.3.8",
@@ -70,13 +70,13 @@
     ]
   },
   "overrides": {
-    "ajv": "^6.12.6",
-    "ajv-keywords": "^3.5.2",
-    "ajv-formats": "^1.5.1"
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2",
+    "ajv-formats": "1.4.0"
   },
   "resolutions": {
-    "ajv": "^6.12.6",
-    "ajv-keywords": "^3.5.2",
-    "ajv-formats": "^1.5.1"
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2",
+    "ajv-formats": "1.4.0"
   }
 }
