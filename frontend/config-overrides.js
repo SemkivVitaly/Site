@@ -23,12 +23,28 @@ module.exports = function override(config, env) {
     config.plugins = config.plugins.filter((plugin) => {
       // Проверяем по имени конструктора и по строковому представлению
       const pluginName = plugin.constructor?.name || '';
-      const pluginString = plugin.toString();
-      return (
-        pluginName !== 'ForkTsCheckerWebpackPlugin' &&
-        !pluginString.includes('ForkTsCheckerWebpackPlugin') &&
-        !pluginString.includes('fork-ts-checker')
-      );
+      const pluginString = String(plugin);
+      const pluginType = typeof plugin;
+      
+      // Более агрессивная фильтрация
+      if (pluginName === 'ForkTsCheckerWebpackPlugin') {
+        return false;
+      }
+      if (pluginString.includes('ForkTsCheckerWebpackPlugin')) {
+        return false;
+      }
+      if (pluginString.includes('fork-ts-checker')) {
+        return false;
+      }
+      // Проверяем по пути модуля, если доступен
+      if (plugin.constructor && plugin.constructor.toString) {
+        const constructorString = plugin.constructor.toString();
+        if (constructorString.includes('fork-ts-checker')) {
+          return false;
+        }
+      }
+      
+      return true;
     });
   }
 
