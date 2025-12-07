@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Container,
@@ -27,22 +27,7 @@ const TaskList: React.FC = () => {
   const [availableTasks, setAvailableTasks] = useState<ProductionTask[]>([]);
   const [selectedTask, setSelectedTask] = useState<ProductionTask | null>(null);
 
-  useEffect(() => {
-    loadTasks();
-  }, [tab]);
-
-  useEffect(() => {
-    // Check if taskId was passed from OrdersList
-    if (location.state?.taskId) {
-      const taskId = location.state.taskId;
-      // Load task by ID
-      tasksApi.getById(taskId).then((task) => {
-        setSelectedTask(task);
-      }).catch(console.error);
-    }
-  }, [location.state]);
-
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     try {
       if (tab === 0) {
         // Мои задачи - только те, которые назначены начальником производства (assignedUserId не null)
@@ -57,7 +42,22 @@ const TaskList: React.FC = () => {
     } catch (error) {
       console.error('Failed to load tasks:', error);
     }
-  };
+  }, [tab, user?.id]);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
+
+  useEffect(() => {
+    // Check if taskId was passed from OrdersList
+    if (location.state?.taskId) {
+      const taskId = location.state.taskId;
+      // Load task by ID
+      tasksApi.getById(taskId).then((task) => {
+        setSelectedTask(task);
+      }).catch(console.error);
+    }
+  }, [location.state]);
 
   if (selectedTask) {
     return (

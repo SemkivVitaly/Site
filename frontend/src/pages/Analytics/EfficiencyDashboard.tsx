@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -10,7 +10,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Button,
   LinearProgress,
   Chip,
@@ -21,7 +20,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ru } from 'date-fns/locale';
 import { analyticsApi, EmployeeEfficiency } from '../../api/analytics.api';
 import { usersApi, User } from '../../api/users.api';
-import { format } from 'date-fns';
 
 const EfficiencyDashboard: React.FC = () => {
   const [startDate, setStartDate] = useState<Date>(
@@ -32,11 +30,7 @@ const EfficiencyDashboard: React.FC = () => {
   const [users, setUsers] = useState<Record<string, User>>({});
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [startDate, endDate]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [efficienciesData, usersData] = await Promise.all([
@@ -59,7 +53,11 @@ const EfficiencyDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const getEfficiencyColor = (efficiency: number) => {
     if (efficiency >= 100) return 'success';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -42,13 +42,7 @@ const IncidentDialog: React.FC<IncidentDialogProps> = ({
   const [machineStatus, setMachineStatus] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
 
-  useEffect(() => {
-    if (open && incidentId) {
-      loadIncident();
-    }
-  }, [open, incidentId]);
-
-  const loadIncident = async () => {
+  const loadIncident = useCallback(async () => {
     if (!incidentId) return;
 
     try {
@@ -73,7 +67,13 @@ const IncidentDialog: React.FC<IncidentDialogProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [incidentId, showError]);
+
+  useEffect(() => {
+    if (open && incidentId) {
+      loadIncident();
+    }
+  }, [open, incidentId, loadIncident]);
 
   const handleAssignIncident = async () => {
     if (!incidentId) return;

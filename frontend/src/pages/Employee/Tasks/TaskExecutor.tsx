@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -28,9 +28,20 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
   const [defectQuantity, setDefectQuantity] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  const loadActiveWorkLog = useCallback(async () => {
+    try {
+      const active = await worklogsApi.getActiveWorkLog();
+      if (active && active.taskId === task.id) {
+        setWorkLog(active);
+      }
+    } catch (error) {
+      console.error('Failed to load work log:', error);
+    }
+  }, [task.id]);
+
   useEffect(() => {
     loadActiveWorkLog();
-  }, []);
+  }, [loadActiveWorkLog]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -46,16 +57,6 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
     };
   }, [workLog]);
 
-  const loadActiveWorkLog = async () => {
-    try {
-      const active = await worklogsApi.getActiveWorkLog();
-      if (active && active.taskId === task.id) {
-        setWorkLog(active);
-      }
-    } catch (error) {
-      console.error('Failed to load work log:', error);
-    }
-  };
 
   const handleStart = async () => {
     try {

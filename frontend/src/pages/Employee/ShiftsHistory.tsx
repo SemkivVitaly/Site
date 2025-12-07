@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -25,11 +25,7 @@ const ShiftsHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [efficiencyData, setEfficiencyData] = useState<Record<string, any>>({});
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const shiftsData = await shiftsApi.getShifts({ userId: user?.id });
@@ -68,7 +64,11 @@ const ShiftsHistory: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const getShiftDuration = (shift: Shift): string => {
     if (!shift.timeIn || !shift.timeOut) return '-';
