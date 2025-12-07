@@ -47,10 +47,6 @@ const MachinesManagement: React.FC = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadMachines();
-  }, [loadMachines]);
-
   const loadMachines = useCallback(async () => {
     try {
       setLoading(true);
