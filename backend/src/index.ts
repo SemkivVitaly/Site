@@ -81,10 +81,22 @@ setupSocketHandlers(io);
 const PORT = parseInt(process.env.PORT || '5000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
+// Validate required environment variables
+if (!process.env.DATABASE_URL) {
+  logger.error('❌ DATABASE_URL environment variable is not set!');
+  logger.error('Please set DATABASE_URL in your environment variables.');
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  logger.warn('⚠️  JWT_SECRET environment variable is not set. Using default (NOT SECURE FOR PRODUCTION)');
+}
+
 httpServer.listen(PORT, HOST, () => {
-  logger.info(`Server running on ${HOST}:${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+  logger.info(`✅ Server running on ${HOST}:${PORT}`);
+  logger.info(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+  logger.info(`🔗 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
 });
 
 // Graceful shutdown
