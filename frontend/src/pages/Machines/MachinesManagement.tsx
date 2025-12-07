@@ -60,6 +60,10 @@ const MachinesManagement: React.FC = () => {
     }
   }, [showError]);
 
+  useEffect(() => {
+    loadMachines();
+  }, [loadMachines]);
+
   const handleOpen = (machine?: Machine) => {
     if (machine) {
       setEditingMachine(machine);
