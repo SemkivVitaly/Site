@@ -140,6 +140,12 @@ export class TasksService {
       where: { id: data.taskId },
       data: updateData,
       include: {
+        order: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         machine: {
           select: {
             id: true,
