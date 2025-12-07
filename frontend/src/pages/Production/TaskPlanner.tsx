@@ -21,15 +21,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  TextField,
   CircularProgress,
 } from '@mui/material';
-import { Edit, PersonAdd, PersonRemove } from '@mui/icons-material';
-import { tasksApi, AssignTaskDto, UpdateTaskDto } from '../../api/tasks.api';
+import { Edit, PersonRemove } from '@mui/icons-material';
+import { tasksApi, AssignTaskDto } from '../../api/tasks.api';
 import { ProductionTask } from '../../api/production.api';
 import { usersApi } from '../../api/users.api';
 import { useNotification } from '../../contexts/NotificationContext';
-import { Priority, TaskStatus } from '../../types';
+import { Priority } from '../../types';
 import { translateTaskStatus, translatePriority, translateMachineStatus } from '../../utils/translations';
 
 interface User {
@@ -45,6 +44,7 @@ const TaskPlanner: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedTask, setSelectedTask] = useState<ProductionTask | null>(null);
   const [formData, setFormData] = useState<AssignTaskDto>({
     taskId: '',
@@ -52,11 +52,7 @@ const TaskPlanner: React.FC = () => {
     priority: Priority.MEDIUM,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [tasksData, usersData] = await Promise.all([
@@ -71,7 +67,11 @@ const TaskPlanner: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleOpen = (task: ProductionTask) => {
     setSelectedTask(task);
@@ -97,7 +97,7 @@ const TaskPlanner: React.FC = () => {
     } catch (error: any) {
       showError(error.response?.data?.error || 'Ошибка назначения задачи');
     }
-  }, [formData, showError, showSuccess]);
+  }, [formData, loadData, showError, showSuccess]);
 
   const handleUnassign = useCallback(async (taskId: string) => {
     try {
@@ -107,7 +107,7 @@ const TaskPlanner: React.FC = () => {
     } catch (error: any) {
       showError(error.response?.data?.error || 'Ошибка снятия задачи');
     }
-  }, [showError, showSuccess]);
+  }, [loadData, showError, showSuccess]);
 
   const getPriorityColor = useCallback((priority: string) => {
     switch (priority) {

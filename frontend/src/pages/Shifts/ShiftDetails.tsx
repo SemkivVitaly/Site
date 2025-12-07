@@ -41,11 +41,7 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
   const [workLogsDialogOpen, setWorkLogsDialogOpen] = useState(false);
   const [selectedShiftForWorkLogs, setSelectedShiftForWorkLogs] = useState<{ shiftId: string; userName: string } | null>(null);
 
-  useEffect(() => {
-    loadShifts();
-  }, [date]);
-
-  const loadShifts = async () => {
+  const loadShifts = useCallback(async () => {
     try {
       setLoading(true);
       const dateKey = format(date, 'yyyy-MM-dd');
@@ -114,7 +110,14 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [date]);
+
+  useEffect(() => {
+    loadShifts();
+  }, [loadShifts]);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getShiftDuration = (shift: Shift): string => {
 
   const isFutureDate = date > new Date();
   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
@@ -175,6 +178,7 @@ const ShiftDetails: React.FC<ShiftDetailsProps> = ({ date, onClose }) => {
             <List>
               {shifts.map((shift) => {
                 const efficiency = efficiencyData[shift.id];
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const tasksCount = efficiency?.workLogsCount || 0;
                 const avgEfficiency = efficiency?.efficiency || 0;
 

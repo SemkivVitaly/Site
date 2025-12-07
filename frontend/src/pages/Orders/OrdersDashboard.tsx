@@ -32,11 +32,7 @@ const OrdersDashboard: React.FC = () => {
   const { user } = useAuth();
   const { showError, showSuccess } = useNotification();
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
       const data = await ordersApi.getAll();
@@ -60,7 +56,11 @@ const OrdersDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, showError]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleDeleteOrder = (orderId: string) => {
     const order = orders.find((o) => o.id === orderId);

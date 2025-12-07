@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -11,14 +11,13 @@ import {
   TableHead,
   TableRow,
   Chip,
-  LinearProgress,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { ExpandMore, Build, Warning } from '@mui/icons-material';
+import { ExpandMore, Build } from '@mui/icons-material';
 import { analyticsApi, type ProductionWorkload as ProductionWorkloadType } from '../../api/analytics.api';
 import { useNotification } from '../../contexts/NotificationContext';
 import { format } from 'date-fns';
@@ -29,11 +28,7 @@ const ProductionWorkload: React.FC = () => {
   const [workload, setWorkload] = useState<ProductionWorkloadType | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadWorkload();
-  }, []);
-
-  const loadWorkload = async () => {
+  const loadWorkload = useCallback(async () => {
     try {
       setLoading(true);
       const data = await analyticsApi.getProductionWorkload();
@@ -44,7 +39,11 @@ const ProductionWorkload: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadWorkload();
+  }, [loadWorkload]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

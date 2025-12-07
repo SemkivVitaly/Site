@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
@@ -34,13 +34,7 @@ const OrderForm: React.FC = () => {
     isImportant: false,
   });
 
-  useEffect(() => {
-    if (id) {
-      loadOrder();
-    }
-  }, [id]);
-
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async () => {
     try {
       setLoading(true);
       const order = await ordersApi.getById(id!);
@@ -63,7 +57,13 @@ const OrderForm: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, showError, navigate]);
+
+  useEffect(() => {
+    if (id) {
+      loadOrder();
+    }
+  }, [id, loadOrder]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

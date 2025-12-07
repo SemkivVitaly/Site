@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -62,11 +62,7 @@ const IncidentsList: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [incidentToDelete, setIncidentToDelete] = useState<Incident | null>(null);
 
-  useEffect(() => {
-    loadIncidents();
-  }, [tabValue]);
-
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     try {
       setLoading(true);
       let statusFilter: string | undefined;
@@ -98,7 +94,11 @@ const IncidentsList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [tabValue, showError]);
+
+  useEffect(() => {
+    loadIncidents();
+  }, [loadIncidents]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);

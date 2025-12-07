@@ -49,7 +49,7 @@ const MachinesManagement: React.FC = () => {
 
   useEffect(() => {
     loadMachines();
-  }, []);
+  }, [loadMachines]);
 
   const loadMachines = useCallback(async () => {
     try {
