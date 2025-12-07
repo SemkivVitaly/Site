@@ -26,10 +26,12 @@ git push
 
 1. Если еще не добавлен репозиторий, нажмите **"+ New"** → **"GitHub Repo"**
 2. Выберите ваш репозиторий
-3. В настройках сервиса:
-   - **Root Directory**: `backend`
+3. **⚠️ КРИТИЧЕСКИ ВАЖНО:** В настройках сервиса (Settings → Service Settings):
+   - **Root Directory**: `backend` (обязательно!)
    - **Build Command**: `npm install && npx prisma generate && npm run build`
    - **Start Command**: `npx prisma migrate deploy && npm start`
+
+**Без указания Root Directory сборка не будет работать!**
 4. Добавьте переменные окружения в **"Variables"**:
 
 ```
@@ -48,31 +50,41 @@ QR_POINT_SECRET=<сгенерируйте: openssl rand -base64 32>
 
 ## Шаг 5: Выполнение миграций
 
-```bash
-# Установите Railway CLI
-npm i -g @railway/cli
+**⚠️ ВАЖНО:** Миграции автоматически выполняются при деплое благодаря настройке в `backend/nixpacks.toml`.
 
-# Войдите в Railway
-railway login
+### Автоматическое выполнение (рекомендуется)
 
-# Свяжите с проектом
-railway link
+Просто разверните сервис бэкенда - миграции применятся автоматически при первом запуске.
 
-# Выполните миграции
-cd backend
-railway run npx prisma migrate deploy
+### Ручное выполнение (если необходимо)
 
-# Создайте первого администратора (опционально)
-railway run npm run create:admin
-```
+Если нужно выполнить миграции вручную перед первым запуском:
+
+**Вариант A: Через Railway CLI**
+
+1. Получите публичный `DATABASE_URL` из Railway (PostgreSQL → Variables → DATABASE_URL)
+2. Установите Railway CLI: `npm i -g @railway/cli`
+3. Войдите: `railway login`
+4. Свяжите проект: `railway link`
+5. Установите публичный URL: `railway variables set DATABASE_URL="<публичный-url>"`
+6. Выполните: `cd backend && railway run npx prisma migrate deploy`
+
+**Вариант B: Локально с публичным URL**
+
+1. Получите публичный `DATABASE_URL` из Railway
+2. Временно добавьте его в `backend/.env`
+3. Выполните: `cd backend && npx prisma migrate deploy`
+4. Удалите временный `.env` файл
 
 ## Шаг 6: Настройка фронтенда
 
 1. Нажмите **"+ New"** → **"GitHub Repo"** (тот же репозиторий)
-2. В настройках сервиса:
-   - **Root Directory**: `frontend`
+2. **⚠️ КРИТИЧЕСКИ ВАЖНО:** В настройках сервиса (Settings → Service Settings):
+   - **Root Directory**: `frontend` (обязательно!)
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
+
+**Без указания Root Directory сборка не будет работать!**
 3. Добавьте переменную окружения:
    - `REACT_APP_API_URL=https://ваш-бэкенд-url.railway.app/api`
 4. Получите URL фронтенда
