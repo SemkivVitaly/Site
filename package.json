@@ -16,9 +16,10 @@
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
     "start": "node backend/scripts/migrate-and-start.js",
-    "postinstall": "cd backend && npm run prisma:generate",
+    "postinstall": "cd backend && npm run prisma:generate || echo Prisma generate failed, run it manually",
     "db:migrate": "cd backend && npx prisma migrate deploy",
-    "db:generate": "cd backend && npm run prisma:generate"
+    "db:generate": "node backend/scripts/regenerate-prisma.js",
+    "fix:prisma": "node backend/scripts/regenerate-prisma.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
