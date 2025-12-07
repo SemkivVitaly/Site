@@ -10,6 +10,7 @@
     "@mui/material": "^5.15.1",
     "@mui/x-date-pickers": "^6.19.7",
     "@types/recharts": "^1.8.29",
+    "ajv": "^6.12.6",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
     "html5-qrcode": "^2.3.8",
