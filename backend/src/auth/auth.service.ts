@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import prisma from '../config/database';
 import { UserRole } from '@prisma/client';
 
@@ -91,9 +91,9 @@ export class AuthService {
 
   generateToken(payload: AuthPayload): string {
     const secret = process.env.JWT_SECRET || 'default-secret-change-in-production';
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const expiresIn: string | number = process.env.JWT_EXPIRES_IN || '7d';
 
-    return jwt.sign(payload, secret, { expiresIn: expiresIn as string });
+    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
   }
 
   verifyToken(token: string): AuthPayload {
