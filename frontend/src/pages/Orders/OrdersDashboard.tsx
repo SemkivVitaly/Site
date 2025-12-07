@@ -56,7 +56,7 @@ const OrdersDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, showError]);
+  }, [showError]);
 
   useEffect(() => {
     loadOrders();

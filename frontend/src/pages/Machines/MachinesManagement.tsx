@@ -26,7 +26,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Add, Edit, Delete, History, PhotoCamera, Delete as DeleteIcon } from '@mui/icons-material';
-import { machinesApi, Machine, CreateMachineDto, UpdateMachineDto } from '../../api/machines.api';
+import { machinesApi, Machine, CreateMachineDto } from '../../api/machines.api';
 import { MachineStatus } from '../../types';
 import { useNotification } from '../../contexts/NotificationContext';
 import { translateMachineStatus } from '../../utils/translations';

@@ -12,7 +12,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import { ordersApi, CreateOrderDto, UpdateOrderDto } from '../../api/orders.api';
+import { ordersApi, CreateOrderDto } from '../../api/orders.api';
 import { Priority } from '../../types';
 import { useNotification } from '../../contexts/NotificationContext';
 

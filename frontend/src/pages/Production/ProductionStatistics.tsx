@@ -56,7 +56,7 @@ const ProductionStatistics: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showError]);
+  }, [startDate, endDate, showError]);
 
   useEffect(() => {
     loadStatistics();
