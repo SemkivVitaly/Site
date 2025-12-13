@@ -274,21 +274,52 @@ const EmployeeStats: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
+    <Container sx={{ px: { xs: 1, sm: 2 } }}>
+      <Typography 
+        variant="h4" 
+        gutterBottom
+        sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+      >
         Моя статистика
       </Typography>
 
-      <Tabs value={tab} onChange={(_, newValue) => setTab(newValue)} sx={{ mb: 3 }}>
-        <Tab label="Обзор" icon={<TrendingUp />} iconPosition="start" />
-        <Tab label="Смены" icon={<AccessTime />} iconPosition="start" />
-        <Tab label="Планирование" icon={<CalendarToday />} iconPosition="start" />
-        <Tab label="Выполненная работа" icon={<Assignment />} iconPosition="start" />
+      <Tabs 
+        value={tab} 
+        onChange={(_, newValue) => setTab(newValue)} 
+        sx={{ mb: 3 }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
+        <Tab 
+          label="Обзор" 
+          icon={<TrendingUp />} 
+          iconPosition="start"
+          sx={{ minWidth: { xs: 80, sm: 120 } }}
+        />
+        <Tab 
+          label="Смены" 
+          icon={<AccessTime />} 
+          iconPosition="start"
+          sx={{ minWidth: { xs: 80, sm: 120 } }}
+        />
+        <Tab 
+          label="Планирование" 
+          icon={<CalendarToday />} 
+          iconPosition="start"
+          sx={{ minWidth: { xs: 80, sm: 120 } }}
+        />
+        <Tab 
+          label="Выполненная работа" 
+          icon={<Assignment />} 
+          iconPosition="start"
+          sx={{ minWidth: { xs: 80, sm: 160 } }}
+        />
       </Tabs>
 
       <TabPanel value={tab} index={0}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
+          <Grid item xs={12} sm={6} md={4}>
             <Card>
               <CardContent>
                 <Typography color="textSecondary" gutterBottom>
@@ -346,17 +377,33 @@ const EmployeeStats: React.FC = () => {
       </TabPanel>
 
       <TabPanel value={tab} index={1}>
-        <TableContainer component={Paper}>
+        <TableContainer 
+          component={Paper}
+          sx={{
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': {
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(0,0,0,0.05)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px',
+            },
+          }}
+        >
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Дата</TableCell>
-                <TableCell>Планируемое начало</TableCell>
-                <TableCell>Время начала</TableCell>
-                <TableCell>Время окончания</TableCell>
-                <TableCell>Длительность</TableCell>
-                <TableCell>Обед</TableCell>
-                <TableCell>Статус</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Дата</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Планируемое начало</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Время начала</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Время окончания</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Длительность</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Обед</TableCell>
+                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Статус</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -539,44 +586,106 @@ const EmployeeStats: React.FC = () => {
                 return (
                   <Accordion key={dateKey} sx={{ mb: 2 }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', mr: 2 }}>
-                        <Typography variant="h6">
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          justifyContent: 'space-between', 
+                          alignItems: { xs: 'flex-start', sm: 'center' }, 
+                          width: '100%', 
+                          mr: 2,
+                          gap: { xs: 1, sm: 0 },
+                          minWidth: 0,
+                        }}
+                      >
+                        <Typography 
+                          variant="h6"
+                          sx={{
+                            fontSize: { xs: '0.875rem', sm: '1.25rem' },
+                            fontWeight: 600,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
+                        >
                           {format(date, 'dd MMMM yyyy', { locale: ru })}
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            gap: { xs: 0.5, sm: 1 },
+                            flexWrap: 'wrap',
+                            flexShrink: { xs: 1, sm: 0 },
+                            minWidth: 0,
+                          }}
+                        >
                           <Chip
                             label={`${dateWorkLogs.length} сессий`}
                             size="small"
                             color="primary"
+                            sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
                           />
                           <Chip
                             label={`Выполнено: ${totalProduced} шт`}
                             size="small"
                             color="success"
+                            sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
                           />
                           {totalDefects > 0 && (
                             <Chip
                               label={`Брак: ${totalDefects} шт`}
                               size="small"
                               color="error"
+                              sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
                             />
                           )}
                         </Box>
                       </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <TableContainer>
-                        <Table size="small">
+                      <TableContainer
+                        sx={{
+                          overflowX: 'auto !important',
+                          overflowY: 'visible !important',
+                          WebkitOverflowScrolling: 'touch !important',
+                          touchAction: 'pan-x pan-y !important',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: 'rgba(0,0,0,0.4) rgba(0,0,0,0.1)',
+                          position: 'relative',
+                          width: '100%',
+                          '&::-webkit-scrollbar': {
+                            height: '14px !important',
+                            display: 'block !important',
+                            WebkitAppearance: 'none !important',
+                          },
+                          '&::-webkit-scrollbar-track': {
+                            background: 'rgba(0,0,0,0.1) !important',
+                            borderRadius: '7px !important',
+                            margin: '2px !important',
+                          },
+                          '&::-webkit-scrollbar-thumb': {
+                            background: 'rgba(0,0,0,0.4) !important',
+                            borderRadius: '7px !important',
+                            border: '3px solid rgba(255,255,255,0.9) !important',
+                            minHeight: '20px !important',
+                            '&:hover': {
+                              background: 'rgba(0,0,0,0.6) !important',
+                            },
+                          },
+                        }}
+                      >
+                        <Table size="small" sx={{ minWidth: 700 }}>
                           <TableHead>
                             <TableRow>
-                              <TableCell>Заказ</TableCell>
-                              <TableCell>Операция</TableCell>
-                              <TableCell>Станок</TableCell>
-                              <TableCell>Количество</TableCell>
-                              <TableCell>Выполнено</TableCell>
-                              <TableCell>Время начала</TableCell>
-                              <TableCell>Время завершения</TableCell>
-                              <TableCell>Брак</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Заказ</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Операция</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Станок</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Количество</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Выполнено</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Время начала</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Время завершения</TableCell>
+                              <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Брак</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>

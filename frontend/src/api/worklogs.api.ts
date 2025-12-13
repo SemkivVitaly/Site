@@ -1,5 +1,13 @@
 import client from './client';
 
+export interface WorkLogPause {
+  id: string;
+  workLogId: string;
+  pauseStart: string;
+  pauseEnd?: string;
+  createdAt: string;
+}
+
 export interface WorkLog {
   id: string;
   taskId: string;
@@ -14,6 +22,7 @@ export interface WorkLog {
     firstName: string;
     lastName: string;
   };
+  pauses?: WorkLogPause[];
   createdAt: string;
 }
 
@@ -52,6 +61,16 @@ export const worklogsApi = {
     const response = await client.get<WorkLog[]>(
       `/worklogs/user/${userId}?startDate=${startDate}&endDate=${endDate}`
     );
+    return response.data;
+  },
+
+  startPause: async (workLogId: string): Promise<WorkLogPause> => {
+    const response = await client.post<WorkLogPause>('/worklogs/pause/start', { workLogId });
+    return response.data;
+  },
+
+  endPause: async (pauseId: string): Promise<WorkLogPause> => {
+    const response = await client.post<WorkLogPause>('/worklogs/pause/end', { pauseId });
     return response.data;
   },
 };

@@ -39,13 +39,8 @@ export class IncidentsService {
       },
     });
 
-    // If machine breakdown, mark machine as requires attention
-    if (data.type === IncidentType.MACHINE_BREAKDOWN && data.machineId) {
-      await prisma.machine.update({
-        where: { id: data.machineId },
-        data: { status: MachineStatus.REQUIRES_ATTENTION },
-      });
-    }
+    // Статус станка не меняется автоматически при создании обращения
+    // Статус можно изменить вручную через интерфейс управления станками
 
     return incident;
   }
@@ -99,17 +94,8 @@ export class IncidentsService {
       throw new Error('Incident not found');
     }
 
-    // If machine breakdown was resolved, mark machine as working
-    if (
-      incident.type === IncidentType.MACHINE_BREAKDOWN &&
-      incident.machineId &&
-      incident.machine
-    ) {
-      await prisma.machine.update({
-        where: { id: incident.machineId },
-        data: { status: MachineStatus.WORKING },
-      });
-    }
+    // Статус станка не меняется автоматически при разрешении обращения
+    // Статус можно изменить вручную через интерфейс управления станками
 
     return prisma.incident.update({
       where: { id: incidentId },
@@ -222,7 +208,7 @@ export class IncidentsService {
             { role: 'MANAGER' }, // Managers can also help
           ],
         },
-        select: { id: true, tags: true, role: true },
+        select: { id: true, tags: true },
       });
 
       // Filter users with "Настройщик" tag

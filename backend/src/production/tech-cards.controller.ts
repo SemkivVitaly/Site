@@ -36,30 +36,47 @@ export class TechCardsController {
       
       // Send notifications to assigned employees
       for (const task of tasks) {
-        if (task.assignedUser && task.assignedUser.id) {
-          // Load full task data with order information
-          const fullTask = await prisma.productionTask.findUnique({
-            where: { id: task.id },
-            include: {
-              order: {
-                select: {
-                  id: true,
-                  title: true,
-                  deadline: true,
-                  priority: true,
-                },
-              },
-              machine: {
-                select: {
-                  id: true,
-                  name: true,
-                  status: true,
-                },
+        // Load full task data with order information
+        const fullTask = await prisma.productionTask.findUnique({
+          where: { id: task.id },
+          include: {
+            order: {
+              select: {
+                id: true,
+                title: true,
+                deadline: true,
+                priority: true,
               },
             },
-          });
+            machine: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+              },
+            },
+          },
+        });
 
-          if (fullTask) {
+        if (fullTask) {
+          // Отправляем уведомления всем назначенным сотрудникам через assignments
+          if (task.assignments && task.assignments.length > 0) {
+            for (const assignment of task.assignments) {
+              io.emit(`notification:${assignment.user.id}`, {
+                type: 'TASK_ASSIGNED',
+                task: {
+                  id: fullTask.id,
+                  operation: fullTask.operation,
+                  order: fullTask.order,
+                  machine: fullTask.machine,
+                  priority: fullTask.priority,
+                },
+                message: `Вам назначена новая задача: ${fullTask.operation}`,
+              });
+            }
+          }
+          // Также отправляем уведомление через assignedUser для обратной совместимости
+          else if (task.assignedUser && task.assignedUser.id) {
             io.emit(`notification:${task.assignedUser.id}`, {
               type: 'TASK_ASSIGNED',
               task: {
@@ -210,8 +227,8 @@ export class TechCardsController {
 
       const task = await techCardsService.updateTask(id, data);
       
-      // Send notification if assigned user changed
-      if (data.assignedUserId !== undefined && task.assignedUser && task.assignedUser.id) {
+      // Send notifications if assigned users changed
+      if (data.assignedUserIds !== undefined || data.assignedUserId !== undefined) {
         // Load full task data with order information
         const fullTask = await prisma.productionTask.findUnique({
           where: { id: task.id },
@@ -235,20 +252,38 @@ export class TechCardsController {
         });
 
         if (fullTask) {
-          // Check if assigned user actually changed
-          const oldAssignedUserId = existingTask.assignedUserId;
-          if (oldAssignedUserId !== task.assignedUser.id) {
-            io.emit(`notification:${task.assignedUser.id}`, {
-              type: 'TASK_ASSIGNED',
-              task: {
-                id: fullTask.id,
-                operation: fullTask.operation,
-                order: fullTask.order,
-                machine: fullTask.machine,
-                priority: fullTask.priority,
-              },
-              message: `Вам назначена задача: ${fullTask.operation}`,
-            });
+          // Отправляем уведомления всем назначенным сотрудникам через assignments
+          if (task.assignments && task.assignments.length > 0) {
+            for (const assignment of task.assignments) {
+              io.emit(`notification:${assignment.user.id}`, {
+                type: 'TASK_ASSIGNED',
+                task: {
+                  id: fullTask.id,
+                  operation: fullTask.operation,
+                  order: fullTask.order,
+                  machine: fullTask.machine,
+                  priority: fullTask.priority,
+                },
+                message: `Вам назначена задача: ${fullTask.operation}`,
+              });
+            }
+          }
+          // Также отправляем уведомление через assignedUser для обратной совместимости
+          else if (task.assignedUser && task.assignedUser.id) {
+            const oldAssignedUserId = existingTask.assignedUserId;
+            if (oldAssignedUserId !== task.assignedUser.id) {
+              io.emit(`notification:${task.assignedUser.id}`, {
+                type: 'TASK_ASSIGNED',
+                task: {
+                  id: fullTask.id,
+                  operation: fullTask.operation,
+                  order: fullTask.order,
+                  machine: fullTask.machine,
+                  priority: fullTask.priority,
+                },
+                message: `Вам назначена задача: ${fullTask.operation}`,
+              });
+            }
           }
         }
       }

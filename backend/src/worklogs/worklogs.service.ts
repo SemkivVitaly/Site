@@ -14,6 +14,14 @@ export interface EndWorkLogDto {
   defectQuantity: number;
 }
 
+export interface StartPauseDto {
+  workLogId: string;
+}
+
+export interface EndPauseDto {
+  pauseId: string;
+}
+
 export class WorkLogsService {
   /**
    * Получает или создает смену для пользователя на указанную дату
@@ -346,6 +354,9 @@ export class WorkLogsService {
             },
           },
         },
+        pauses: {
+          orderBy: { pauseStart: 'desc' },
+        },
       },
     });
   }
@@ -360,6 +371,9 @@ export class WorkLogsService {
             firstName: true,
             lastName: true,
           },
+        },
+        pauses: {
+          orderBy: { pauseStart: 'desc' },
         },
       },
       orderBy: { startTime: 'desc' },
@@ -405,9 +419,75 @@ export class WorkLogsService {
             lastName: true,
           },
         },
+        pauses: {
+          orderBy: { pauseStart: 'desc' },
+        },
       },
       orderBy: { startTime: 'desc' },
     });
+  }
+
+  async startPause(data: StartPauseDto) {
+    const workLog = await prisma.workLog.findUnique({
+      where: { id: data.workLogId },
+    });
+
+    if (!workLog) {
+      throw new Error('Work log not found');
+    }
+
+    if (workLog.endTime) {
+      throw new Error('Cannot pause completed work log');
+    }
+
+    // Проверяем, есть ли уже активная пауза
+    const activePause = await prisma.workLogPause.findFirst({
+      where: {
+        workLogId: data.workLogId,
+        pauseEnd: null,
+      },
+    });
+
+    if (activePause) {
+      throw new Error('Pause already started');
+    }
+
+    const pause = await prisma.workLogPause.create({
+      data: {
+        workLogId: data.workLogId,
+        pauseStart: new Date(),
+      },
+    });
+
+    logger.info(`Pause started for work log ${data.workLogId}`);
+    return pause;
+  }
+
+  async endPause(data: EndPauseDto) {
+    const pause = await prisma.workLogPause.findUnique({
+      where: { id: data.pauseId },
+    });
+
+    if (!pause) {
+      throw new Error('Pause not found');
+    }
+
+    if (pause.pauseEnd) {
+      throw new Error('Pause already ended');
+    }
+
+    const updatedPause = await prisma.workLogPause.update({
+      where: { id: data.pauseId },
+      data: {
+        pauseEnd: new Date(),
+      },
+    });
+
+    const pauseDuration = Math.round(
+      (updatedPause.pauseEnd!.getTime() - updatedPause.pauseStart.getTime()) / 1000 / 60
+    );
+    logger.info(`Pause ended for work log ${pause.workLogId}, duration: ${pauseDuration} min`);
+    return updatedPause;
   }
 }
 

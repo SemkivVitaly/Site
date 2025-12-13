@@ -68,7 +68,7 @@ const ProductionStatistics: React.FC = () => {
 
   if (loading && !statistics) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <CircularProgress />
         </Box>
@@ -78,7 +78,7 @@ const ProductionStatistics: React.FC = () => {
 
   if (!statistics) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Alert severity="error">Не удалось загрузить статистику</Alert>
       </Container>
     );
@@ -100,9 +100,13 @@ const ProductionStatistics: React.FC = () => {
   }));
 
   return (
-    <Container>
-        <Box sx={{ mb: 3, mt: 2 }}>
-          <Typography variant="h4" gutterBottom>
+    <Container maxWidth={false} sx={{ px: { xs: 0.5, sm: 2 }, overflowX: 'visible' }}>
+        <Box sx={{ mb: 3, mt: { xs: 1, sm: 2 } }}>
+          <Typography 
+            variant="h4" 
+            gutterBottom
+            sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+          >
             Статистика производительности производства
           </Typography>
         </Box>
@@ -196,7 +200,7 @@ const ProductionStatistics: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Производительность по дням
               </Typography>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={window.innerWidth <= 600 ? 250 : 300}>
                 <BarChart data={dailyChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -214,7 +218,7 @@ const ProductionStatistics: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Эффективность по дням (%)
               </Typography>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={window.innerWidth <= 600 ? 250 : 300}>
                 <LineChart data={dailyChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -246,8 +250,38 @@ const ProductionStatistics: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Производительность по станкам
           </Typography>
-          <TableContainer>
-            <Table>
+          <TableContainer
+            sx={{
+              overflowX: 'auto !important',
+              overflowY: 'visible !important',
+              WebkitOverflowScrolling: 'touch !important',
+              touchAction: 'pan-x pan-y !important',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(0,0,0,0.4) rgba(0,0,0,0.1)',
+              position: 'relative',
+              width: '100%',
+              '&::-webkit-scrollbar': {
+                height: '14px !important',
+                display: 'block !important',
+                WebkitAppearance: 'none !important',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0,0,0,0.1) !important',
+                borderRadius: '7px !important',
+                margin: '2px !important',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(0,0,0,0.4) !important',
+                borderRadius: '7px !important',
+                border: '3px solid rgba(255,255,255,0.9) !important',
+                minHeight: '20px !important',
+                '&:hover': {
+                  background: 'rgba(0,0,0,0.6) !important',
+                },
+              },
+            }}
+          >
+            <Table sx={{ minWidth: 700 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Станок</TableCell>
@@ -301,28 +335,64 @@ const ProductionStatistics: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Детальная статистика по дням
           </Typography>
-          <TableContainer>
-            <Table size="small">
+          <TableContainer
+            sx={{
+              overflowX: 'auto !important',
+              overflowY: 'visible !important',
+              WebkitOverflowScrolling: 'touch !important',
+              touchAction: 'pan-x pan-y !important',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(0,0,0,0.4) rgba(0,0,0,0.1)',
+              position: 'relative',
+              width: '100%',
+              '&::-webkit-scrollbar': {
+                height: '14px !important',
+                display: 'block !important',
+                WebkitAppearance: 'none !important',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0,0,0,0.1) !important',
+                borderRadius: '7px !important',
+                margin: '2px !important',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(0,0,0,0.4) !important',
+                borderRadius: '7px !important',
+                border: '3px solid rgba(255,255,255,0.9) !important',
+                minHeight: '20px !important',
+                '&:hover': {
+                  background: 'rgba(0,0,0,0.6) !important',
+                },
+              },
+            }}
+          >
+            <Table size="small" sx={{ minWidth: 700 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Дата</TableCell>
-                  <TableCell align="right">Произведено (факт)</TableCell>
-                  <TableCell align="right">Ожидалось</TableCell>
-                  <TableCell align="right">Часов работы</TableCell>
-                  <TableCell align="right">Эффективность (%)</TableCell>
-                  <TableCell align="right">Брак (шт)</TableCell>
-                  <TableCell align="right">% брака</TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Дата</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Произведено (факт)</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Ожидалось</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Часов работы</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Эффективность (%)</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>Брак (шт)</TableCell>
+                  <TableCell align="right" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem' } }}>% брака</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {statistics.daily.map((day) => (
                   <TableRow key={day.date}>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.8125rem', md: '0.875rem' } }}>
                       {format(new Date(day.date), 'dd MMM yyyy', { locale: ru })}
                     </TableCell>
-                    <TableCell align="right">{day.actualQuantity.toLocaleString()}</TableCell>
-                    <TableCell align="right">{day.expectedQuantity.toLocaleString()}</TableCell>
-                    <TableCell align="right">{day.hours.toFixed(1)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: { xs: '0.6875rem', sm: '0.8125rem', md: '0.875rem' } }}>
+                      {day.actualQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontSize: { xs: '0.6875rem', sm: '0.8125rem', md: '0.875rem' } }}>
+                      {day.expectedQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontSize: { xs: '0.6875rem', sm: '0.8125rem', md: '0.875rem' } }}>
+                      {day.hours.toFixed(1)}
+                    </TableCell>
                     <TableCell align="right">
                       <Chip
                         label={`${day.efficiency.toFixed(1)}%`}
@@ -336,14 +406,18 @@ const ProductionStatistics: React.FC = () => {
                             : 'error'
                         }
                         size="small"
+                        sx={{ fontSize: { xs: '0.625rem', sm: '0.6875rem' } }}
                       />
                     </TableCell>
-                    <TableCell align="right">{day.defects}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: { xs: '0.6875rem', sm: '0.8125rem', md: '0.875rem' } }}>
+                      {day.defects}
+                    </TableCell>
                     <TableCell align="right">
                       <Chip
                         label={`${day.defectRate.toFixed(2)}%`}
                         color={day.defectRate > 5 ? 'error' : 'default'}
                         size="small"
+                        sx={{ fontSize: { xs: '0.625rem', sm: '0.6875rem' } }}
                       />
                     </TableCell>
                   </TableRow>
@@ -352,7 +426,7 @@ const ProductionStatistics: React.FC = () => {
             </Table>
           </TableContainer>
         </Paper>
-      </Container>
+    </Container>
   );
 };
 

@@ -104,7 +104,7 @@ const ProductionWorkload: React.FC = () => {
 
   if (loading) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <CircularProgress />
         </Box>
@@ -114,16 +114,20 @@ const ProductionWorkload: React.FC = () => {
 
   if (!workload) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Alert severity="error">Не удалось загрузить данные о нагрузке</Alert>
       </Container>
     );
   }
 
   return (
-    <Container>
-      <Box sx={{ mb: 3, mt: 2 }}>
-        <Typography variant="h4" gutterBottom>
+    <Container maxWidth={false} sx={{ px: { xs: 0.5, sm: 2 }, overflowX: 'visible' }}>
+      <Box sx={{ mb: 3, mt: { xs: 1, sm: 2 } }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+        >
           Нагрузка на производство
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -210,11 +214,30 @@ const ProductionWorkload: React.FC = () => {
           {workload.machines.map((machine) => (
             <Accordion key={machine.machineId} sx={{ mb: 2 }}>
               <AccordionSummary expandIcon={<ExpandMore />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                  <Build sx={{ color: machine.machineStatus === 'WORKING' ? 'success.main' : 'error.main' }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6">{machine.machineName}</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' }, 
+                  gap: { xs: 1, sm: 2 }, 
+                  width: '100%' 
+                }}>
+                  <Build sx={{ 
+                    color: machine.machineStatus === 'WORKING' ? 'success.main' : 'error.main',
+                    fontSize: { xs: '1.5rem', sm: '2rem' }
+                  }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="h6"
+                      sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }}
+                    >
+                      {machine.machineName}
+                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap',
+                      gap: 1, 
+                      mt: 0.5 
+                    }}>
                       <Chip
                         label={getStatusLabel(machine.machineStatus)}
                         color={getStatusColor(machine.machineStatus) as any}
@@ -251,18 +274,48 @@ const ProductionWorkload: React.FC = () => {
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
-                <TableContainer>
-                  <Table size="small">
+                <TableContainer
+                  sx={{
+                    overflowX: 'auto !important',
+                    overflowY: 'visible !important',
+                    WebkitOverflowScrolling: 'touch !important',
+                    touchAction: 'pan-x pan-y !important',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(0,0,0,0.4) rgba(0,0,0,0.1)',
+                    position: 'relative',
+                    width: '100%',
+                    '&::-webkit-scrollbar': {
+                      height: '14px !important',
+                      display: 'block !important',
+                      WebkitAppearance: 'none !important',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: 'rgba(0,0,0,0.1) !important',
+                      borderRadius: '7px !important',
+                      margin: '2px !important',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: 'rgba(0,0,0,0.4) !important',
+                      borderRadius: '7px !important',
+                      border: '3px solid rgba(255,255,255,0.9) !important',
+                      minHeight: '20px !important',
+                      '&:hover': {
+                        background: 'rgba(0,0,0,0.6) !important',
+                      },
+                    },
+                  }}
+                >
+                  <Table size="small" sx={{ minWidth: 800 }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Заказ</TableCell>
-                        <TableCell>Операция</TableCell>
-                        <TableCell>Приоритет</TableCell>
-                        <TableCell>Дедлайн</TableCell>
-                        <TableCell>Осталось (шт)</TableCell>
-                        <TableCell>Время (1 станок, 1 чел, ч)</TableCell>
-                        <TableCell>Время (все станки, ч)</TableCell>
-                        <TableCell>Время (станки + работники, ч)</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Заказ</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Операция</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Приоритет</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Дедлайн</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Осталось (шт)</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Время (1 станок, 1 чел, ч)</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Время (все станки, ч)</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem', md: '0.8125rem' } }}>Время (станки + работники, ч)</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>

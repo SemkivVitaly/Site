@@ -68,19 +68,47 @@ const EmployeeDashboard: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 3 }}>
-        <Typography variant="h5" gutterBottom align="center">
-          Добро пожаловать, {user?.firstName}!
-        </Typography>
+    <Container maxWidth="sm" sx={{ px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ py: { xs: 2, sm: 3 } }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '2rem' },
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              mb: 1,
+            }}
+          >
+            Добро пожаловать, {user?.firstName}!
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Ваше рабочее место
+          </Typography>
+        </Box>
 
-        <Grid container spacing={2} sx={{ mt: 2 }}>
+        <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Смена
-                </Typography>
+            <Card
+              elevation={0}
+              sx={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%)',
+                border: '1px solid',
+                borderColor: 'primary.main',
+                borderRadius: 3,
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <AccessTime sx={{ fontSize: 32, color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Смена
+                  </Typography>
+                </Box>
                 {currentShift ? (
                   <Box>
                     <Typography variant="body2">
@@ -128,18 +156,37 @@ const EmployeeDashboard: React.FC = () => {
 
           {activeWorkLog && (
             <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Активная задача
+              <Card
+                elevation={0}
+                sx={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                  border: '1px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Assignment sx={{ fontSize: 32, color: 'success.main' }} />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Активная задача
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 500 }}>
+                    {activeWorkLog.task?.operation}
                   </Typography>
-                  <Typography variant="body2">
-                    {activeWorkLog.task?.operation} - {activeWorkLog.task?.machine?.name}
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Станок: {activeWorkLog.task?.machine?.name}
                   </Typography>
                   <Button
                     fullWidth
                     variant="contained"
-                    sx={{ mt: 2 }}
+                    size="large"
+                    sx={{ 
+                      borderRadius: 2,
+                      py: 1.5,
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    }}
                     onClick={() => navigate('/employee/tasks')}
                   >
                     Продолжить работу
@@ -158,7 +205,16 @@ const EmployeeDashboard: React.FC = () => {
                   size="large"
                   startIcon={<Restaurant />}
                   onClick={() => handleLunch(currentShift?.lunchStart && !currentShift?.lunchEnd ? 'end' : 'start')}
-                  sx={{ py: 2 }}
+                  sx={{ 
+                    py: 2.5,
+                    borderRadius: 3,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    borderWidth: currentShift.lunchStart && !currentShift.lunchEnd ? 0 : 2,
+                    ...(currentShift.lunchStart && !currentShift.lunchEnd ? {
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    } : {}),
+                  }}
                   disabled={!!(!currentShift.timeIn || (currentShift.lunchStart && currentShift.lunchEnd && new Date(currentShift.lunchStart).getTime() === new Date('1970-01-01T00:00:00.000Z').getTime()))}
                 >
                   {currentShift.lunchStart && !currentShift.lunchEnd ? 'Завершить обед' : 'Уйти на обед'}
@@ -201,59 +257,97 @@ const EmployeeDashboard: React.FC = () => {
               size="large"
               startIcon={<QrCodeScanner />}
               onClick={() => navigate('/employee/qr-scanner')}
-              sx={{ py: 2 }}
+              sx={{ 
+                py: 2.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
+                '&:hover': {
+                  boxShadow: '0 6px 20px rgba(99, 102, 241, 0.5)',
+                },
+              }}
             >
               {currentShift?.timeIn && !currentShift?.timeOut ? 'Выход (QR)' : 'Вход (QR)'}
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <Button
               fullWidth
               variant="outlined"
               size="large"
               startIcon={<Assignment />}
               onClick={() => navigate('/employee/tasks')}
-              sx={{ py: 2 }}
+              sx={{ 
+                py: 2.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderWidth: 2,
+                minHeight: 64,
+              }}
             >
               Мои задачи
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <Button
               fullWidth
               variant="outlined"
               size="large"
               startIcon={<ShoppingCart />}
               onClick={() => navigate('/employee/orders')}
-              sx={{ py: 2 }}
+              sx={{ 
+                py: 2.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderWidth: 2,
+                minHeight: 64,
+              }}
             >
               Выбрать заказ
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <Button
               fullWidth
               variant="outlined"
               size="large"
               startIcon={<Help />}
               onClick={() => navigate('/employee/help')}
-              sx={{ py: 2 }}
+              sx={{ 
+                py: 2.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderWidth: 2,
+                minHeight: 64,
+              }}
             >
               Помощь
             </Button>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <Button
               fullWidth
               variant="outlined"
               size="large"
               startIcon={<AccessTime />}
               onClick={() => navigate('/employee/shifts')}
-              sx={{ py: 2 }}
+              sx={{ 
+                py: 2.5,
+                borderRadius: 3,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderWidth: 2,
+                minHeight: 64,
+              }}
             >
               История смен
             </Button>

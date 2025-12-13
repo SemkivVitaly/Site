@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Container,
@@ -12,6 +12,7 @@ import {
   ListItemText,
   Button,
   Chip,
+  Divider,
 } from '@mui/material';
 import { tasksApi } from '../../../api/tasks.api';
 import { ProductionTask } from '../../../api/production.api';
@@ -50,7 +51,7 @@ const TaskList: React.FC = () => {
         // Фильтруем только задачи, которые были назначены (assignedUserId === user.id)
         setMyTasks(tasks.filter((t) => t.assignedUserId === user?.id && (t.status === 'PENDING' || t.status === 'IN_PROGRESS')));
       } else {
-        // Свободные задачи - только те, которые не назначены (assignedUserId === null)
+        // Свободные задачи - показываем все задачи по каждому заказу, даже если они уже взяты
         const tasks = await tasksApi.getAvailableTasks();
         setAvailableTasks(tasks);
       }
@@ -58,6 +59,21 @@ const TaskList: React.FC = () => {
       console.error('Failed to load tasks:', error);
     }
   };
+
+  // Группируем задачи по заказам для вкладки "Свободные"
+  const tasksByOrder = useMemo(() => {
+    if (tab !== 1) return {};
+    
+    const grouped: Record<string, ProductionTask[]> = {};
+    availableTasks.forEach((task) => {
+      const orderId = task.orderId;
+      if (!grouped[orderId]) {
+        grouped[orderId] = [];
+      }
+      grouped[orderId].push(task);
+    });
+    return grouped;
+  }, [availableTasks, tab]);
 
   if (selectedTask) {
     return (
@@ -70,6 +86,55 @@ const TaskList: React.FC = () => {
       />
     );
   }
+
+  const renderTaskItem = (task: ProductionTask, isMyTask: boolean) => {
+    const isAssigned = task.assignedUserId !== null;
+    const isAssignedToMe = task.assignedUserId === user?.id;
+    const canTake = !isAssigned || isAssignedToMe;
+
+    return (
+      <ListItem
+        key={task.id}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1,
+          mb: 1,
+          opacity: isAssigned && !isAssignedToMe ? 0.7 : 1,
+        }}
+      >
+        <ListItemText
+          primary={task.operation}
+          secondary={
+            <Box>
+              <Typography variant="body2">
+                {task.order?.title || `Заказ ${task.orderId}`} - {task.machine.name}
+              </Typography>
+              {isAssigned && task.assignedUser && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  Назначено: {task.assignedUser.firstName} {task.assignedUser.lastName}
+                </Typography>
+              )}
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Chip label={translateTaskStatus(task.status)} size="small" />
+                <Chip label={`${task.completedQuantity}/${task.totalQuantity}`} size="small" />
+                {isAssigned && !isAssignedToMe && (
+                  <Chip label="Занято" size="small" color="warning" />
+                )}
+              </Box>
+            </Box>
+          }
+        />
+        <Button
+          variant="contained"
+          onClick={() => setSelectedTask(task)}
+          disabled={!canTake && !isMyTask}
+        >
+          {isMyTask ? 'Продолжить' : (isAssignedToMe ? 'Продолжить' : (isAssigned ? 'Просмотр' : 'Взять'))}
+        </Button>
+      </ListItem>
+    );
+  };
 
   return (
     <Container maxWidth="sm">
@@ -84,40 +149,23 @@ const TaskList: React.FC = () => {
         </Tabs>
       </Paper>
 
-      <List>
-        {(tab === 0 ? myTasks : availableTasks).map((task) => (
-          <ListItem
-            key={task.id}
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              mb: 1,
-            }}
-          >
-            <ListItemText
-              primary={task.operation}
-              secondary={
-                <Box>
-                  <Typography variant="body2">
-                    {task.order?.title || `Заказ ${task.orderId}`} - {task.machine.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <Chip label={translateTaskStatus(task.status)} size="small" />
-                    <Chip label={`${task.completedQuantity}/${task.totalQuantity}`} size="small" />
-                  </Box>
-                </Box>
-              }
-            />
-            <Button
-              variant="contained"
-              onClick={() => setSelectedTask(task)}
-            >
-              {tab === 0 ? 'Продолжить' : 'Взять'}
-            </Button>
-          </ListItem>
-        ))}
-      </List>
+      {tab === 0 ? (
+        <List>
+          {myTasks.map((task) => renderTaskItem(task, true))}
+        </List>
+      ) : (
+        <List>
+          {Object.entries(tasksByOrder).map(([orderId, tasks]) => (
+            <Box key={orderId}>
+              <Typography variant="h6" sx={{ mt: 2, mb: 1, px: 2 }}>
+                {tasks[0]?.order?.title || `Заказ ${orderId}`}
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              {tasks.map((task) => renderTaskItem(task, false))}
+            </Box>
+          ))}
+        </List>
+      )}
     </Container>
   );
 };

@@ -12,6 +12,11 @@ import {
   TableRow,
   Chip,
   CircularProgress,
+  Card,
+  CardContent,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { shiftsApi, Shift } from '../../api/shifts.api';
 import { analyticsApi } from '../../api/analytics.api';
@@ -21,6 +26,8 @@ import { ru } from 'date-fns/locale';
 
 const ShiftsHistory: React.FC = () => {
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [efficiencyData, setEfficiencyData] = useState<Record<string, any>>({});
@@ -105,7 +112,7 @@ const ShiftsHistory: React.FC = () => {
 
   if (loading) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <CircularProgress />
         </Box>
@@ -114,54 +121,232 @@ const ShiftsHistory: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
+    <Container sx={{ px: { xs: 1, sm: 2 } }}>
+      <Typography 
+        variant="h4" 
+        gutterBottom
+        sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' }, mb: { xs: 2, sm: 3 } }}
+      >
         История смен
       </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Дата</TableCell>
-              <TableCell>Время начала</TableCell>
-              <TableCell>Время окончания</TableCell>
-              <TableCell>Длительность смены</TableCell>
-              <TableCell>Обед</TableCell>
-              <TableCell>Длительность обеда</TableCell>
-              <TableCell>Выполнено задач</TableCell>
-              <TableCell>КПД</TableCell>
-              <TableCell>Статус</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {shifts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center">
-                  <Typography variant="body2" color="text.secondary">
-                    Нет данных о сменах
+      {shifts.length === 0 ? (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Нет данных о сменах
+          </Typography>
+        </Paper>
+      ) : isMobile ? (
+        // Мобильный вид: карточки
+        <Box>
+          {shifts.map((shift) => {
+            const efficiency = efficiencyData[shift.id];
+            const tasksCount = efficiency?.workLogsCount || 0;
+            const avgEfficiency = efficiency?.efficiency || 0;
+
+            return (
+              <Card key={shift.id} sx={{ mb: 2 }}>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                  <Typography 
+                    variant="h6"
+                    sx={{ 
+                      fontSize: { xs: '0.9375rem', sm: '1.125rem' },
+                      fontWeight: 600,
+                      mb: 1.5
+                    }}
+                  >
+                    {format(new Date(shift.date), 'dd MMM yyyy', { locale: ru })}
                   </Typography>
-                </TableCell>
+
+                  <Divider sx={{ my: 1.5 }} />
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                    >
+                      Время начала
+                    </Typography>
+                    <Typography 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                    >
+                      {shift.timeIn ? format(new Date(shift.timeIn), 'HH:mm') : '-'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                    >
+                      Время окончания
+                    </Typography>
+                    <Typography 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                    >
+                      {shift.timeOut ? format(new Date(shift.timeOut), 'HH:mm') : '-'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                    >
+                      Длительность смены
+                    </Typography>
+                    <Typography 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                    >
+                      {getShiftDuration(shift)}
+                    </Typography>
+                  </Box>
+
+                  {(shift.lunchStart || shift.lunchEnd) && (
+                    <>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                        >
+                          Обед
+                        </Typography>
+                        <Typography 
+                          variant="body2"
+                          sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                        >
+                          {shift.lunchStart ? (
+                            shift.lunchEnd ? (
+                              `${format(new Date(shift.lunchStart), 'HH:mm')} - ${format(new Date(shift.lunchEnd), 'HH:mm')}`
+                            ) : (
+                              format(new Date(shift.lunchStart), 'HH:mm')
+                            )
+                          ) : (
+                            '-'
+                          )}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                        >
+                          Длительность обеда
+                        </Typography>
+                        <Typography 
+                          variant="body2"
+                          sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                        >
+                          {getLunchDuration(shift)}
+                        </Typography>
+                      </Box>
+                    </>
+                  )}
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                    >
+                      Выполнено задач
+                    </Typography>
+                    <Typography 
+                      variant="body2"
+                      sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                    >
+                      {tasksCount}
+                    </Typography>
+                  </Box>
+
+                  {avgEfficiency > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                      >
+                        КПД
+                      </Typography>
+                      <Chip
+                        label={`${avgEfficiency.toFixed(1)}%`}
+                        size="small"
+                        color={avgEfficiency >= 100 ? 'success' : avgEfficiency >= 80 ? 'warning' : 'error'}
+                        sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
+                      />
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 2 }}>
+                    {shift.isLate && <Chip label="Опоздание" size="small" color="error" sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }} />}
+                    {!shift.timeOut && <Chip label="В процессе" size="small" color="info" sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }} />}
+                    {shift.timeOut && !shift.isLate && <Chip label="Завершена" size="small" color="success" sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }} />}
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      ) : (
+        // Десктопный вид: таблица
+        <TableContainer 
+          component={Paper}
+          sx={{
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': {
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(0,0,0,0.05)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px',
+            },
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Дата</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Время начала</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Время окончания</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Длительность смены</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Обед</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Длительность обеда</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Выполнено задач</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>КПД</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Статус</TableCell>
               </TableRow>
-            ) : (
-              shifts.map((shift) => {
+            </TableHead>
+            <TableBody>
+              {shifts.map((shift) => {
                 const efficiency = efficiencyData[shift.id];
                 const tasksCount = efficiency?.workLogsCount || 0;
                 const avgEfficiency = efficiency?.efficiency || 0;
 
                 return (
                   <TableRow key={shift.id}>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
                       {format(new Date(shift.date), 'dd MMM yyyy', { locale: ru })}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
                       {shift.timeIn ? format(new Date(shift.timeIn), 'HH:mm') : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
                       {shift.timeOut ? format(new Date(shift.timeOut), 'HH:mm') : '-'}
                     </TableCell>
-                    <TableCell>{getShiftDuration(shift)}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{getShiftDuration(shift)}</TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
                       {shift.lunchStart ? (
                         shift.lunchEnd ? (
                           `${format(new Date(shift.lunchStart), 'HH:mm')} - ${format(new Date(shift.lunchEnd), 'HH:mm')}`
@@ -172,31 +357,34 @@ const ShiftsHistory: React.FC = () => {
                         '-'
                       )}
                     </TableCell>
-                    <TableCell>{getLunchDuration(shift)}</TableCell>
-                    <TableCell>{tasksCount}</TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{getLunchDuration(shift)}</TableCell>
+                    <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{tasksCount}</TableCell>
                     <TableCell>
                       {avgEfficiency > 0 ? (
                         <Chip
                           label={`${avgEfficiency.toFixed(1)}%`}
                           size="small"
                           color={avgEfficiency >= 100 ? 'success' : avgEfficiency >= 80 ? 'warning' : 'error'}
+                          sx={{ fontSize: '0.75rem' }}
                         />
                       ) : (
                         '-'
                       )}
                     </TableCell>
                     <TableCell>
-                      {shift.isLate && <Chip label="Опоздание" size="small" color="error" />}
-                      {!shift.timeOut && <Chip label="В процессе" size="small" color="info" />}
-                      {shift.timeOut && !shift.isLate && <Chip label="Завершена" size="small" color="success" />}
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {shift.isLate && <Chip label="Опоздание" size="small" color="error" sx={{ fontSize: '0.75rem' }} />}
+                        {!shift.timeOut && <Chip label="В процессе" size="small" color="info" sx={{ fontSize: '0.75rem' }} />}
+                        {shift.timeOut && !shift.isLate && <Chip label="Завершена" size="small" color="success" sx={{ fontSize: '0.75rem' }} />}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Container>
   );
 };

@@ -8,7 +8,8 @@ export interface CreateTaskDto {
   totalQuantity: number;
   priority?: Priority;
   sequence: number;
-  assignedUserId?: string;
+  assignedUserId?: string; // Оставляем для обратной совместимости
+  assignedUserIds?: string[]; // Новое поле для множественных назначений
 }
 
 export interface CreateTechCardDto {
@@ -29,8 +30,8 @@ export class TechCardsService {
 
     // Create all tasks
     const tasks = await Promise.all(
-      data.tasks.map((task) =>
-        prisma.productionTask.create({
+      data.tasks.map(async (task) => {
+        const createdTask = await prisma.productionTask.create({
           data: {
             orderId: data.orderId,
             machineId: task.machineId,
@@ -38,7 +39,15 @@ export class TechCardsService {
             totalQuantity: task.totalQuantity,
             priority: task.priority || Priority.MEDIUM,
             sequence: task.sequence,
-            assignedUserId: task.assignedUserId,
+            assignedUserId: task.assignedUserId, // Оставляем для обратной совместимости
+            // Создаем множественные назначения, если указаны
+            assignments: task.assignedUserIds && task.assignedUserIds.length > 0
+              ? {
+                  create: task.assignedUserIds.map((userId) => ({
+                    userId,
+                  })),
+                }
+              : undefined,
           },
           include: {
             machine: {
@@ -55,9 +64,21 @@ export class TechCardsService {
                 lastName: true,
               },
             },
+            assignments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
           },
-        })
-      )
+        });
+        return createdTask;
+      })
     );
 
     // Update order status to IN_QUEUE
@@ -87,6 +108,17 @@ export class TechCardsService {
             id: true,
             firstName: true,
             lastName: true,
+          },
+        },
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
         workLogs: {
@@ -126,7 +158,15 @@ export class TechCardsService {
         totalQuantity: data.totalQuantity,
         priority: data.priority || Priority.MEDIUM,
         sequence: data.sequence,
-        assignedUserId: data.assignedUserId,
+        assignedUserId: data.assignedUserId, // Оставляем для обратной совместимости
+        // Создаем множественные назначения, если указаны
+        assignments: data.assignedUserIds && data.assignedUserIds.length > 0
+          ? {
+              create: data.assignedUserIds.map((userId) => ({
+                userId,
+              })),
+            }
+          : undefined,
       },
       include: {
         machine: {
@@ -141,6 +181,17 @@ export class TechCardsService {
             id: true,
             firstName: true,
             lastName: true,
+          },
+        },
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
       },
@@ -177,6 +228,24 @@ export class TechCardsService {
       }
     }
 
+    // Если указаны assignedUserIds, обновляем множественные назначения
+    if (data.assignedUserIds !== undefined) {
+      // Удаляем все существующие назначения
+      await prisma.taskAssignment.deleteMany({
+        where: { taskId: id },
+      });
+
+      // Создаем новые назначения
+      if (data.assignedUserIds.length > 0) {
+        await prisma.taskAssignment.createMany({
+          data: data.assignedUserIds.map((userId) => ({
+            taskId: id,
+            userId,
+          })),
+        });
+      }
+    }
+
     return prisma.productionTask.update({
       where: { id },
       data: {
@@ -199,6 +268,17 @@ export class TechCardsService {
             id: true,
             firstName: true,
             lastName: true,
+          },
+        },
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
           },
         },
       },

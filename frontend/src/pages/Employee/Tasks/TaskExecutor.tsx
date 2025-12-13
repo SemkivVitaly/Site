@@ -8,10 +8,14 @@ import {
   TextField,
   Alert,
   CircularProgress,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
-import { ArrowBack, PlayArrow, Stop } from '@mui/icons-material';
+import { ArrowBack, PlayArrow, Stop, Pause, PlayCircle } from '@mui/icons-material';
 import { ProductionTask } from '../../../api/production.api';
-import { worklogsApi, WorkLog } from '../../../api/worklogs.api';
+import { worklogsApi, WorkLog, WorkLogPause } from '../../../api/worklogs.api';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { format } from 'date-fns';
 
@@ -27,6 +31,7 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
   const [quantity, setQuantity] = useState(0);
   const [defectQuantity, setDefectQuantity] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [activePause, setActivePause] = useState<WorkLogPause | null>(null);
 
   useEffect(() => {
     loadActiveWorkLog();
@@ -38,19 +43,43 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
       interval = setInterval(() => {
         const start = new Date(workLog.startTime).getTime();
         const now = Date.now();
-        setElapsedTime(Math.floor((now - start) / 1000));
+        
+        // Вычитаем время всех завершенных пауз
+        let pauseTime = 0;
+        if (workLog.pauses) {
+          workLog.pauses.forEach((pause) => {
+            if (pause.pauseEnd) {
+              const pauseStart = new Date(pause.pauseStart).getTime();
+              const pauseEnd = new Date(pause.pauseEnd).getTime();
+              pauseTime += pauseEnd - pauseStart;
+            }
+          });
+        }
+        
+        // Вычитаем время активной паузы, если она есть
+        if (activePause) {
+          const pauseStart = new Date(activePause.pauseStart).getTime();
+          pauseTime += now - pauseStart;
+        }
+        
+        setElapsedTime(Math.floor((now - start - pauseTime) / 1000));
       }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [workLog]);
+  }, [workLog, activePause]);
 
   const loadActiveWorkLog = async () => {
     try {
       const active = await worklogsApi.getActiveWorkLog();
       if (active && active.taskId === task.id) {
         setWorkLog(active);
+        // Проверяем активную паузу
+        if (active.pauses) {
+          const currentPause = active.pauses.find((p) => !p.pauseEnd);
+          setActivePause(currentPause || null);
+        }
       }
     } catch (error) {
       console.error('Failed to load work log:', error);
@@ -78,6 +107,15 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
       return;
     }
 
+    // Завершаем активную паузу, если есть
+    if (activePause) {
+      try {
+        await worklogsApi.endPause(activePause.id);
+      } catch (error) {
+        console.error('Failed to end pause:', error);
+      }
+    }
+
     try {
       setLoading(true);
       await worklogsApi.endWorkLog({
@@ -91,6 +129,41 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
       showError(error.response?.data?.error || 'Ошибка завершения работы');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePause = async () => {
+    if (!workLog) return;
+
+    if (activePause) {
+      // Завершаем паузу
+      try {
+        setLoading(true);
+        const endedPause = await worklogsApi.endPause(activePause.id);
+        setActivePause(null);
+        // Обновляем workLog
+        const updated = await worklogsApi.getActiveWorkLog();
+        if (updated && updated.taskId === task.id) {
+          setWorkLog(updated);
+        }
+        showSuccess('Пауза завершена');
+      } catch (error: any) {
+        showError(error.response?.data?.error || 'Ошибка завершения паузы');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Начинаем паузу
+      try {
+        setLoading(true);
+        const newPause = await worklogsApi.startPause(workLog.id);
+        setActivePause(newPause);
+        showSuccess('Пауза начата');
+      } catch (error: any) {
+        showError(error.response?.data?.error || 'Ошибка начала паузы');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -120,11 +193,42 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
           </Typography>
 
           {workLog && !workLog.endTime && (
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity={activePause ? 'warning' : 'info'} sx={{ mt: 2 }}>
               Работа начата: {format(new Date(workLog.startTime), 'HH:mm:ss')}
               <br />
               Время работы: {formatTime(elapsedTime)}
+              {activePause && (
+                <>
+                  <br />
+                  <strong>Пауза активна с {format(new Date(activePause.pauseStart), 'HH:mm:ss')}</strong>
+                </>
+              )}
             </Alert>
+          )}
+
+          {workLog && workLog.pauses && workLog.pauses.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                История пауз:
+              </Typography>
+              <List dense>
+                {workLog.pauses
+                  .filter((p) => p.pauseEnd) // Только завершенные паузы
+                  .map((pause) => {
+                    const start = new Date(pause.pauseStart);
+                    const end = new Date(pause.pauseEnd!);
+                    const duration = Math.floor((end.getTime() - start.getTime()) / 1000);
+                    return (
+                      <ListItem key={pause.id} sx={{ py: 0.5 }}>
+                        <ListItemText
+                          primary={`${format(start, 'HH:mm:ss')} - ${format(end, 'HH:mm:ss')}`}
+                          secondary={`Длительность: ${formatTime(duration)}`}
+                        />
+                      </ListItem>
+                    );
+                  })}
+              </List>
+            </Box>
           )}
 
           {!workLog ? (
@@ -141,6 +245,18 @@ const TaskExecutor: React.FC<TaskExecutorProps> = ({ task, onBack }) => {
             </Button>
           ) : (
             <Box sx={{ mt: 3 }}>
+              <Button
+                fullWidth
+                variant={activePause ? 'contained' : 'outlined'}
+                color={activePause ? 'warning' : 'primary'}
+                size="large"
+                startIcon={activePause ? <PlayCircle /> : <Pause />}
+                onClick={handlePause}
+                disabled={loading}
+                sx={{ mb: 2 }}
+              >
+                {activePause ? 'Возобновить работу' : 'Пауза'}
+              </Button>
               <TextField
                 fullWidth
                 label="Количество произведено"

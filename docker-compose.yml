@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: typography-postgres
+    environment:
+      POSTGRES_DB: typography_erp
+      POSTGRES_USER: typography_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U typography_user -d typography_erp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - typography-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: typography-backend
+    environment:
+      DATABASE_URL: postgresql://typography_user:${POSTGRES_PASSWORD:-change-me-in-production}@postgres:5432/typography_erp?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PORT: 5000
+      NODE_ENV: production
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      UPLOAD_DIR: ./uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      QR_POINT_SECRET: ${QR_POINT_SECRET:-change-me-in-production}
+    ports:
+      - "5001:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/public/uploads:/app/public/uploads
+    networks:
+      - typography-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5001/api}
+    container_name: typography-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - typography-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  typography-network:
+    driver: bridge
+

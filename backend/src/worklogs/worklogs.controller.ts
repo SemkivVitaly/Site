@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { WorkLogsService, StartWorkLogDto, EndWorkLogDto } from './worklogs.service';
+import { WorkLogsService, StartWorkLogDto, EndWorkLogDto, StartPauseDto, EndPauseDto } from './worklogs.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const workLogsService = new WorkLogsService();
@@ -95,6 +95,52 @@ export class WorkLogsController {
       res.json(workLogs);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  async startPause(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { workLogId } = req.body;
+
+      if (!workLogId) {
+        return res.status(400).json({ error: 'Work log ID is required' });
+      }
+
+      // Проверяем, что workLog принадлежит пользователю
+      const workLog = await workLogsService.getActiveWorkLog(userId);
+      if (!workLog || workLog.id !== workLogId) {
+        return res.status(403).json({ error: 'Work log not found or does not belong to user' });
+      }
+
+      const pause = await workLogsService.startPause({ workLogId });
+      res.json(pause);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async endPause(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { pauseId } = req.body;
+
+      if (!pauseId) {
+        return res.status(400).json({ error: 'Pause ID is required' });
+      }
+
+      const pause = await workLogsService.endPause({ pauseId });
+      res.json(pause);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   }
 }

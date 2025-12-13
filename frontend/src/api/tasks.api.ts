@@ -5,7 +5,8 @@ export type { ProductionTask };
 
 export interface AssignTaskDto {
   taskId: string;
-  userId?: string;
+  userId?: string; // Оставляем для обратной совместимости
+  userIds?: string[]; // Новое поле для множественных назначений
   priority?: string;
 }
 

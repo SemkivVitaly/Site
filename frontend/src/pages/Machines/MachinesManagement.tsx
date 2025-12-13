@@ -24,6 +24,11 @@ import {
   Box,
   Avatar,
   CircularProgress,
+  Card,
+  CardContent,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Add, Edit, Delete, History, PhotoCamera, Delete as DeleteIcon } from '@mui/icons-material';
 import { machinesApi, Machine, CreateMachineDto, UpdateMachineDto } from '../../api/machines.api';
@@ -33,6 +38,8 @@ import { translateMachineStatus } from '../../utils/translations';
 
 const MachinesManagement: React.FC = () => {
   const { showError, showSuccess } = useNotification();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [machines, setMachines] = useState<Machine[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -188,7 +195,7 @@ const MachinesManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container>
+      <Container sx={{ px: { xs: 1, sm: 2 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
           <CircularProgress />
         </Box>
@@ -197,76 +204,259 @@ const MachinesManagement: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Управление станками</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => handleOpen()}>
+    <Container sx={{ px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'stretch', sm: 'center' }, 
+        mb: 3,
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography 
+          variant="h4"
+          sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+        >
+          Управление станками
+        </Typography>
+        <Button 
+          variant="contained" 
+          startIcon={<Add />} 
+          onClick={() => handleOpen()}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
           Добавить станок
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Фото</TableCell>
-              <TableCell>Название</TableCell>
-              <TableCell>Статус</TableCell>
-              <TableCell>Количество</TableCell>
-              <TableCell>Норматив (шт/час)</TableCell>
-              <TableCell>Операции</TableCell>
-              <TableCell>Действия</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {memoizedMachines.map((machine) => (
-              <TableRow key={machine.id}>
-                <TableCell>
+      {isMobile ? (
+        // Мобильный вид: карточки
+        <Box>
+          {memoizedMachines.map((machine) => (
+            <Card key={machine.id} sx={{ mb: 2 }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
                   <Avatar
                     src={machine.photoUrl ? `http://localhost:5000${machine.photoUrl}` : undefined}
                     alt={machine.name}
-                    sx={{ width: 56, height: 56 }}
+                    sx={{ width: { xs: 48, sm: 56 }, height: { xs: 48, sm: 56 } }}
                   >
                     {machine.name.charAt(0)}
                   </Avatar>
-                </TableCell>
-                <TableCell>{machine.name}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={translateMachineStatus(machine.status)}
-                    color={getStatusColor(machine.status) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{machine.quantity || 1}</TableCell>
-                <TableCell>{machine.efficiencyNorm}</TableCell>
-                <TableCell>
-                  {machine.capabilities.map((cap, idx) => (
-                    <Chip key={idx} label={cap} size="small" sx={{ mr: 0.5 }} />
-                  ))}
-                </TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => handleOpen(machine)}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="h6"
+                      sx={{ 
+                        fontSize: { xs: '0.9375rem', sm: '1.125rem' },
+                        fontWeight: 600,
+                        mb: 0.5,
+                        wordBreak: 'break-word'
+                      }}
+                    >
+                      {machine.name}
+                    </Typography>
+                    <Chip
+                      label={translateMachineStatus(machine.status)}
+                      color={getStatusColor(machine.status) as any}
+                      size="small"
+                      sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
+                    />
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                  >
+                    Количество
+                  </Typography>
+                  <Typography 
+                    variant="body2"
+                    sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                  >
+                    {machine.quantity || 1}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                  >
+                    Норматив (шт/час)
+                  </Typography>
+                  <Typography 
+                    variant="body2"
+                    sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, fontWeight: 500 }}
+                  >
+                    {machine.efficiencyNorm}
+                  </Typography>
+                </Box>
+
+                {machine.capabilities.length > 0 && (
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' }, display: 'block', mb: 0.5 }}
+                    >
+                      Операции
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {machine.capabilities.map((cap, idx) => (
+                        <Chip 
+                          key={idx} 
+                          label={cap} 
+                          size="small" 
+                          sx={{ fontSize: { xs: '0.6875rem', sm: '0.75rem' } }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 2 }}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleOpen(machine)}
+                    sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: '1.125rem', sm: '1.25rem' } } }}
+                    color="primary"
+                  >
                     <Edit />
                   </IconButton>
-                  <IconButton size="small" onClick={() => handleDelete(machine.id)}>
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleDelete(machine.id)}
+                    sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: '1.125rem', sm: '1.25rem' } } }}
+                    color="error"
+                  >
                     <Delete />
                   </IconButton>
-                  <IconButton size="small">
+                  <IconButton 
+                    size="small"
+                    sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: '1.125rem', sm: '1.25rem' } } }}
+                  >
                     <History />
                   </IconButton>
-                </TableCell>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      ) : (
+        // Десктопный вид: таблица
+        <TableContainer 
+          component={Paper}
+          sx={{
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': {
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'rgba(0,0,0,0.05)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px',
+            },
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Фото</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Название</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Статус</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Количество</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Норматив (шт/час)</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Операции</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Действия</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {memoizedMachines.map((machine) => (
+                <TableRow key={machine.id}>
+                  <TableCell>
+                    <Avatar
+                      src={machine.photoUrl ? `http://localhost:5000${machine.photoUrl}` : undefined}
+                      alt={machine.name}
+                      sx={{ width: 56, height: 56 }}
+                    >
+                      {machine.name.charAt(0)}
+                    </Avatar>
+                  </TableCell>
+                  <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{machine.name}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={translateMachineStatus(machine.status)}
+                      color={getStatusColor(machine.status) as any}
+                      size="small"
+                      sx={{ fontSize: '0.75rem' }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{machine.quantity || 1}</TableCell>
+                  <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{machine.efficiencyNorm}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {machine.capabilities.map((cap, idx) => (
+                        <Chip key={idx} label={cap} size="small" sx={{ fontSize: '0.75rem' }} />
+                      ))}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleOpen(machine)}
+                        sx={{ '& .MuiSvgIcon-root': { fontSize: '1.125rem' } }}
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDelete(machine.id)}
+                        sx={{ '& .MuiSvgIcon-root': { fontSize: '1.125rem' } }}
+                      >
+                        <Delete />
+                      </IconButton>
+                      <IconButton 
+                        size="small"
+                        sx={{ '& .MuiSvgIcon-root': { fontSize: '1.125rem' } }}
+                      >
+                        <History />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100%', sm: '90vh' },
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' }, pb: { xs: 1, sm: 2 } }}>
           {editingMachine ? 'Редактировать станок' : 'Добавить станок'}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ pt: { xs: 2, sm: 3 } }}>
           <TextField
             fullWidth
             label="Название"
@@ -274,9 +464,17 @@ const MachinesManagement: React.FC = () => {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             margin="normal"
             required
+            sx={{
+              '& .MuiInputBase-root': { fontSize: { xs: '1rem', sm: '1rem' } },
+              '& .MuiInputLabel-root': { fontSize: { xs: '0.875rem', sm: '1rem' } }
+            }}
           />
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography 
+              variant="subtitle2" 
+              gutterBottom
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            >
               Фото станка
             </Typography>
             {photoPreview && (
@@ -284,7 +482,7 @@ const MachinesManagement: React.FC = () => {
                 <Avatar
                   src={photoPreview}
                   alt="Preview"
-                  sx={{ width: 120, height: 120 }}
+                  sx={{ width: { xs: 100, sm: 120 }, height: { xs: 100, sm: 120 } }}
                 />
                 {editingMachine && (
                   <IconButton
@@ -292,7 +490,7 @@ const MachinesManagement: React.FC = () => {
                     onClick={handleDeletePhoto}
                     sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'error.main', color: 'white' }}
                   >
-                    <DeleteIcon />
+                    <DeleteIcon fontSize="small" />
                   </IconButton>
                 )}
               </Box>
@@ -302,6 +500,7 @@ const MachinesManagement: React.FC = () => {
               component="label"
               startIcon={<PhotoCamera />}
               fullWidth
+              sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
             >
               {photoPreview ? 'Изменить фото' : 'Загрузить фото'}
               <input
@@ -313,15 +512,22 @@ const MachinesManagement: React.FC = () => {
             </Button>
           </Box>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Статус</InputLabel>
+            <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Статус</InputLabel>
             <Select
               value={formData.status || MachineStatus.WORKING}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              sx={{
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                '& .MuiSelect-select': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  py: { xs: 1, sm: 1.25 }
+                }
+              }}
             >
-              <MenuItem value={MachineStatus.WORKING}>Рабочий</MenuItem>
-              <MenuItem value={MachineStatus.REPAIR}>Ремонт</MenuItem>
-              <MenuItem value={MachineStatus.MAINTENANCE}>Обслуживание</MenuItem>
-              <MenuItem value={MachineStatus.REQUIRES_ATTENTION}>Требует внимания</MenuItem>
+              <MenuItem value={MachineStatus.WORKING} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Рабочий</MenuItem>
+              <MenuItem value={MachineStatus.REPAIR} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Ремонт</MenuItem>
+              <MenuItem value={MachineStatus.MAINTENANCE} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Обслуживание</MenuItem>
+              <MenuItem value={MachineStatus.REQUIRES_ATTENTION} sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Требует внимания</MenuItem>
             </Select>
           </FormControl>
           <TextField
@@ -334,6 +540,11 @@ const MachinesManagement: React.FC = () => {
             required
             inputProps={{ min: 1 }}
             helperText="Количество станков данного типа на производстве"
+            sx={{
+              '& .MuiInputBase-root': { fontSize: { xs: '1rem', sm: '1rem' } },
+              '& .MuiInputLabel-root': { fontSize: { xs: '0.875rem', sm: '1rem' } },
+              '& .MuiFormHelperText-root': { fontSize: { xs: '0.75rem', sm: '0.8125rem' } }
+            }}
           />
           <TextField
             fullWidth
@@ -343,6 +554,10 @@ const MachinesManagement: React.FC = () => {
             onChange={(e) => setFormData({ ...formData, efficiencyNorm: Number(e.target.value) })}
             margin="normal"
             required
+            sx={{
+              '& .MuiInputBase-root': { fontSize: { xs: '1rem', sm: '1rem' } },
+              '& .MuiInputLabel-root': { fontSize: { xs: '0.875rem', sm: '1rem' } }
+            }}
           />
           <TextField
             fullWidth
@@ -356,11 +571,26 @@ const MachinesManagement: React.FC = () => {
             }
             margin="normal"
             placeholder="Печать, Ламинация, Резка"
+            sx={{
+              '& .MuiInputBase-root': { fontSize: { xs: '1rem', sm: '1rem' } },
+              '& .MuiInputLabel-root': { fontSize: { xs: '0.875rem', sm: '1rem' } }
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={submitting}>Отмена</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, gap: { xs: 1, sm: 2 } }}>
+          <Button 
+            onClick={handleClose} 
+            disabled={submitting}
+            sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+          >
+            Отмена
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            disabled={submitting}
+            sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+          >
             {submitting ? <CircularProgress size={20} /> : 'Сохранить'}
           </Button>
         </DialogActions>

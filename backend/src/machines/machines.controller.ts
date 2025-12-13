@@ -119,7 +119,7 @@ export class MachinesController {
         }
       }
 
-      const updatedMachine = await machinesService.update(id, { photoUrl: undefined });
+      const updatedMachine = await machinesService.update(id, { photoUrl: null });
       res.json(updatedMachine);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

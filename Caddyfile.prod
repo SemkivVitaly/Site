@@ -1,0 +1,55 @@
+# Если у вас есть домен, раскомментируйте и замените на ваш домен:
+# ваш-домен.com {
+#     # Проксируем WebSocket для socket.io на бэкенд
+#     handle /socket.io/* {
+#         reverse_proxy backend:5000 {
+#             header_up Connection {>Connection}
+#             header_up Upgrade {>Upgrade}
+#         }
+#     }
+#
+#     # Проксируем API на бэкенд
+#     handle /api/* {
+#         reverse_proxy backend:5000
+#     }
+#
+#     # Статические файлы фронтенда
+#     handle {
+#         reverse_proxy frontend:80
+#     }
+# }
+
+{
+    auto_https off
+    http_port 80
+    https_port 443
+}
+
+# Если домена нет, используйте HTTP на порту 80 (внутри контейнера):
+# Внешний порт будет 8081 благодаря маппингу в docker-compose.prod.yml
+http://:80 {
+    # Отключаем HSTS и принудительный HTTPS
+    header {
+        Strict-Transport-Security "max-age=0"
+        -Strict-Transport-Security
+    }
+    
+    # Проксируем WebSocket для socket.io на бэкенд
+    handle /socket.io/* {
+        reverse_proxy backend:5000 {
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
+
+    # Проксируем API на бэкенд
+    handle /api/* {
+        reverse_proxy backend:5000
+    }
+
+    # Статические файлы фронтенда
+    handle {
+        reverse_proxy frontend:80
+    }
+}
+

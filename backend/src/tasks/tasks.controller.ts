@@ -62,19 +62,38 @@ export class TasksController {
 
       const task = await tasksService.assignTask(data);
       
-      // Send notification if task is assigned to a specific user
-      if (task.assignedUser && task.assignedUser.id) {
-        io.emit(`notification:${task.assignedUser.id}`, {
-          type: 'TASK_ASSIGNED',
-          task: {
-            id: task.id,
-            operation: task.operation,
-            order: task.order,
-            machine: task.machine,
-            priority: task.priority,
-          },
-          message: `Вам назначена задача: ${task.operation}`,
-        });
+      // Send notifications to all assigned employees
+      if (task) {
+        // Отправляем уведомления всем назначенным сотрудникам через assignments
+        if (task.assignments && task.assignments.length > 0) {
+          for (const assignment of task.assignments) {
+            io.emit(`notification:${assignment.user.id}`, {
+              type: 'TASK_ASSIGNED',
+              task: {
+                id: task.id,
+                operation: task.operation,
+                order: task.order,
+                machine: task.machine,
+                priority: task.priority,
+              },
+              message: `Вам назначена задача: ${task.operation}`,
+            });
+          }
+        }
+        // Также отправляем уведомление через assignedUser для обратной совместимости
+        else if (task.assignedUser && task.assignedUser.id) {
+          io.emit(`notification:${task.assignedUser.id}`, {
+            type: 'TASK_ASSIGNED',
+            task: {
+              id: task.id,
+              operation: task.operation,
+              order: task.order,
+              machine: task.machine,
+              priority: task.priority,
+            },
+            message: `Вам назначена задача: ${task.operation}`,
+          });
+        }
       }
 
       res.json(task);

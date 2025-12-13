@@ -16,7 +16,9 @@ const httpServer = createServer(app);
 const socketIoOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:8081',
   process.env.FRONTEND_URL,
+  'http://178.67.157.66:8081', // Публичный IP
 ].filter(Boolean);
 
 const io = new Server(httpServer, {
@@ -27,6 +29,11 @@ const io = new Server(httpServer, {
       
       // Всегда разрешаем localhost для разработки
       if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        return callback(null, true);
+      }
+      
+      // Разрешаем запросы с публичного IP
+      if (origin.startsWith('http://178.67.157.66:')) {
         return callback(null, true);
       }
       
@@ -47,7 +54,9 @@ const io = new Server(httpServer, {
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:8081',
   process.env.FRONTEND_URL,
+  'http://178.67.157.66:8081', // Публичный IP
 ].filter(Boolean);
 
 app.use(cors({
@@ -57,6 +66,11 @@ app.use(cors({
     
     // Всегда разрешаем localhost для разработки
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    // Разрешаем запросы с публичного IP
+    if (origin.startsWith('http://178.67.157.66:')) {
       return callback(null, true);
     }
     

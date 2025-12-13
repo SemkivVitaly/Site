@@ -20,6 +20,11 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  Card,
+  CardContent,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Visibility, Build, Delete } from '@mui/icons-material';
 import { format } from 'date-fns';
@@ -29,6 +34,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { IncidentStatus, IncidentType } from '../../types';
 import IncidentDialog from '../../components/IncidentDialog/IncidentDialog';
 import { translateIncidentType } from '../../utils/translations';
+import IncidentCard from '../../components/IncidentCard/IncidentCard';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -54,6 +60,8 @@ function TabPanel(props: TabPanelProps) {
 
 const IncidentsList: React.FC = () => {
   const { showError, showSuccess } = useNotification();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -172,280 +180,195 @@ const IncidentsList: React.FC = () => {
     return null;
   };
 
+  const renderIncidentsList = (filteredIncidents: Incident[]) => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Typography>Загрузка...</Typography>
+        </Box>
+      );
+    }
+
+    if (filteredIncidents.length === 0) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <Typography color="text.secondary">Нет обращений</Typography>
+        </Box>
+      );
+    }
+
+    if (isMobile) {
+      return (
+        <Box>
+          {filteredIncidents.map((incident) => (
+            <IncidentCard
+              key={incident.id}
+              incident={incident}
+              onView={handleViewIncident}
+              onDelete={handleDeleteClick}
+              getTypeIcon={getTypeIcon}
+              getStatusLabel={getStatusLabel}
+              getStatusColor={getStatusColor}
+            />
+          ))}
+        </Box>
+      );
+    }
+
+    return (
+      <TableContainer
+        sx={{
+          overflowX: 'auto',
+          '&::-webkit-scrollbar': {
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(0,0,0,0.05)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: '4px',
+          },
+        }}
+      >
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Тип</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Заголовок</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Создатель</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Исполнитель</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Станок</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Статус</TableCell>
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Дата создания</TableCell>
+              {(tabValue === 2) && (
+                <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Дата завершения</TableCell>
+              )}
+              <TableCell sx={{ fontSize: { sm: '0.875rem', md: '0.9375rem' } }}>Действия</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredIncidents.map((incident) => (
+              <TableRow key={incident.id} hover>
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {getTypeIcon(incident.type)}
+                    {translateIncidentType(incident.type)}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>{incident.title}</TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                  {incident.creator.firstName} {incident.creator.lastName}
+                </TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                  {incident.resolver
+                    ? `${incident.resolver.firstName} ${incident.resolver.lastName}`
+                    : '-'}
+                </TableCell>
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                  {incident.machine ? incident.machine.name : '-'}
+                </TableCell>
+                {tabValue !== 2 && (
+                  <TableCell>
+                    <Chip
+                      label={getStatusLabel(incident.status)}
+                      color={getStatusColor(incident.status) as any}
+                      size="small"
+                      sx={{ fontSize: '0.75rem' }}
+                    />
+                  </TableCell>
+                )}
+                <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                  {format(new Date(incident.createdAt), 'dd MMM yyyy HH:mm', { locale: ru })}
+                </TableCell>
+                {tabValue === 2 && (
+                  <TableCell sx={{ fontSize: { sm: '0.8125rem', md: '0.875rem' } }}>
+                    {incident.resolvedAt
+                      ? format(new Date(incident.resolvedAt), 'dd MMM yyyy HH:mm', { locale: ru })
+                      : '-'}
+                  </TableCell>
+                )}
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewIncident(incident.id)}
+                      color="primary"
+                      sx={{ '& .MuiSvgIcon-root': { fontSize: '1.125rem' } }}
+                    >
+                      <Visibility />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteClick(incident)}
+                      color="error"
+                      sx={{ '& .MuiSvgIcon-root': { fontSize: '1.125rem' } }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   return (
-    <Container>
-      <Box sx={{ mb: 3, mt: 2 }}>
-        <Typography variant="h4" gutterBottom>
+    <Container sx={{ px: { xs: 1, sm: 2 } }}>
+      <Box sx={{ mb: 3, mt: { xs: 1, sm: 2 } }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom
+          sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}
+        >
           Обращения
         </Typography>
       </Box>
 
       <Paper>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Активные" />
-            <Tab label="В обработке" />
-            <Tab label="Завершенные" />
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
+            <Tab 
+              label="Активные"
+              sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, minWidth: { xs: 80, sm: 120 } }}
+            />
+            <Tab 
+              label="В обработке"
+              sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, minWidth: { xs: 100, sm: 140 } }}
+            />
+            <Tab 
+              label="Завершенные"
+              sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, minWidth: { xs: 100, sm: 140 } }}
+            />
           </Tabs>
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>Заголовок</TableCell>
-                  <TableCell>Создатель</TableCell>
-                  <TableCell>Исполнитель</TableCell>
-                  <TableCell>Станок</TableCell>
-                  <TableCell>Статус</TableCell>
-                  <TableCell>Дата создания</TableCell>
-                  <TableCell>Действия</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Загрузка...
-                    </TableCell>
-                  </TableRow>
-                ) : incidents.filter(i => i.status === IncidentStatus.OPEN || i.status === IncidentStatus.IN_PROGRESS).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Нет активных обращений
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  incidents
-                    .filter(i => i.status === IncidentStatus.OPEN || i.status === IncidentStatus.IN_PROGRESS)
-                    .map((incident) => (
-                      <TableRow key={incident.id} hover>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {getTypeIcon(incident.type)}
-                            {translateIncidentType(incident.type)}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{incident.title}</TableCell>
-                        <TableCell>
-                          {incident.creator.firstName} {incident.creator.lastName}
-                        </TableCell>
-                        <TableCell>
-                          {incident.resolver
-                            ? `${incident.resolver.firstName} ${incident.resolver.lastName}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {incident.machine ? incident.machine.name : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStatusLabel(incident.status)}
-                            color={getStatusColor(incident.status) as any}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(incident.createdAt), 'dd MMM yyyy HH:mm', { locale: ru })}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewIncident(incident.id)}
-                              color="primary"
-                            >
-                              <Visibility />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteClick(incident)}
-                              color="error"
-                            >
-                              <Delete />
-                            </IconButton>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {renderIncidentsList(
+            incidents.filter(i => i.status === IncidentStatus.OPEN || i.status === IncidentStatus.IN_PROGRESS)
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>Заголовок</TableCell>
-                  <TableCell>Создатель</TableCell>
-                  <TableCell>Исполнитель</TableCell>
-                  <TableCell>Станок</TableCell>
-                  <TableCell>Статус</TableCell>
-                  <TableCell>Дата создания</TableCell>
-                  <TableCell>Действия</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Загрузка...
-                    </TableCell>
-                  </TableRow>
-                ) : incidents.filter(i => i.status === IncidentStatus.IN_PROGRESS).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Нет обращений в обработке
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  incidents
-                    .filter(i => i.status === IncidentStatus.IN_PROGRESS)
-                    .map((incident) => (
-                      <TableRow key={incident.id} hover>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {getTypeIcon(incident.type)}
-                            {translateIncidentType(incident.type)}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{incident.title}</TableCell>
-                        <TableCell>
-                          {incident.creator.firstName} {incident.creator.lastName}
-                        </TableCell>
-                        <TableCell>
-                          {incident.resolver
-                            ? `${incident.resolver.firstName} ${incident.resolver.lastName}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {incident.machine ? incident.machine.name : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStatusLabel(incident.status)}
-                            color={getStatusColor(incident.status) as any}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(incident.createdAt), 'dd MMM yyyy HH:mm', { locale: ru })}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewIncident(incident.id)}
-                              color="primary"
-                            >
-                              <Visibility />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteClick(incident)}
-                              color="error"
-                            >
-                              <Delete />
-                            </IconButton>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {renderIncidentsList(
+            incidents.filter(i => i.status === IncidentStatus.IN_PROGRESS)
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>Заголовок</TableCell>
-                  <TableCell>Создатель</TableCell>
-                  <TableCell>Исполнитель</TableCell>
-                  <TableCell>Станок</TableCell>
-                  <TableCell>Дата создания</TableCell>
-                  <TableCell>Дата завершения</TableCell>
-                  <TableCell>Действия</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Загрузка...
-                    </TableCell>
-                  </TableRow>
-                ) : incidents.filter(i => i.status === IncidentStatus.RESOLVED).length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      Нет завершенных обращений
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  incidents
-                    .filter(i => i.status === IncidentStatus.RESOLVED)
-                    .map((incident) => (
-                      <TableRow key={incident.id} hover>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {getTypeIcon(incident.type)}
-                            {translateIncidentType(incident.type)}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{incident.title}</TableCell>
-                        <TableCell>
-                          {incident.creator.firstName} {incident.creator.lastName}
-                        </TableCell>
-                        <TableCell>
-                          {incident.resolver
-                            ? `${incident.resolver.firstName} ${incident.resolver.lastName}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {incident.machine ? incident.machine.name : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(incident.createdAt), 'dd MMM yyyy HH:mm', { locale: ru })}
-                        </TableCell>
-                        <TableCell>
-                          {incident.resolvedAt
-                            ? format(new Date(incident.resolvedAt), 'dd MMM yyyy HH:mm', { locale: ru })
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewIncident(incident.id)}
-                              color="primary"
-                            >
-                              <Visibility />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteClick(incident)}
-                              color="error"
-                            >
-                              <Delete />
-                            </IconButton>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {renderIncidentsList(
+            incidents.filter(i => i.status === IncidentStatus.RESOLVED)
+          )}
         </TabPanel>
       </Paper>
 
@@ -456,17 +379,39 @@ const IncidentsList: React.FC = () => {
         onIncidentUpdated={loadIncidents}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>Удалить обращение?</DialogTitle>
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={handleDeleteCancel}
+        fullScreen={isMobile}
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100%', sm: '90vh' },
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+          Удалить обращение?
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
             Вы уверены, что хотите удалить обращение "{incidentToDelete?.title}"?
             Это действие нельзя отменить.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel}>Отмена</Button>
-          <Button onClick={handleDeleteConfirm} variant="contained" color="error">
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, gap: { xs: 1, sm: 2 } }}>
+          <Button 
+            onClick={handleDeleteCancel}
+            sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+          >
+            Отмена
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            variant="contained" 
+            color="error"
+            sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+          >
             Удалить
           </Button>
         </DialogActions>

@@ -159,7 +159,7 @@ const IncidentDialog: React.FC<IncidentDialogProps> = ({
   const getIncidentTypeLabel = (type: string) => {
     switch (type) {
       case 'MACHINE_BREAKDOWN':
-        return 'Поломка станка';
+        return 'Помощь со станком';
       case 'TASK_QUESTION':
         return 'Вопрос по задаче';
       default:

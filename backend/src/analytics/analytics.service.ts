@@ -23,6 +23,7 @@ export class AnalyticsService {
             },
           },
         },
+        pauses: true,
       },
     });
 
@@ -31,9 +32,27 @@ export class AnalyticsService {
 
     workLogs.forEach((log) => {
       if (log.endTime) {
-        const durationHours =
-          (new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) /
-          (1000 * 60 * 60);
+        const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+        
+        // Вычитаем время всех пауз
+        let pauseTimeMs = 0;
+        if (log.pauses) {
+          log.pauses.forEach((pause) => {
+            if (pause.pauseEnd) {
+              pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+            }
+          });
+        }
+        
+        const workDurationMs = totalDurationMs - pauseTimeMs;
+        let durationHours = workDurationMs / (1000 * 60 * 60);
+
+        // Ограничиваем время работы максимум 8 часами (стандартная смена)
+        // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+        const STANDARD_WORK_HOURS = 8;
+        if (durationHours > STANDARD_WORK_HOURS) {
+          durationHours = STANDARD_WORK_HOURS;
+        }
 
         const actual = log.quantityProduced;
         const expected = log.task.machine.efficiencyNorm * durationHours;
@@ -70,6 +89,7 @@ export class AnalyticsService {
             lastName: true,
           },
         },
+        pauses: true,
       },
     });
 
@@ -91,9 +111,27 @@ export class AnalyticsService {
     const contributions = workLogs.map((log) => {
       if (!log.endTime) return null;
 
-      const durationHours =
-        (new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) /
-        (1000 * 60 * 60);
+      const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+      
+      // Вычитаем время всех пауз
+      let pauseTimeMs = 0;
+      if (log.pauses) {
+        log.pauses.forEach((pause) => {
+          if (pause.pauseEnd) {
+            pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+          }
+        });
+      }
+      
+      const workDurationMs = totalDurationMs - pauseTimeMs;
+      let durationHours = workDurationMs / (1000 * 60 * 60);
+
+      // Ограничиваем время работы максимум 8 часами (стандартная смена)
+      // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+      const STANDARD_WORK_HOURS = 8;
+      if (durationHours > STANDARD_WORK_HOURS) {
+        durationHours = STANDARD_WORK_HOURS;
+      }
 
       const actual = log.quantityProduced;
       const expected = task.machine.efficiencyNorm * durationHours;
@@ -140,22 +178,6 @@ export class AnalyticsService {
    * Рассчитывает нагрузку на производство с учетом всех активных задач и производительности станков
    */
   async getProductionWorkload() {
-    // Получаем всех пользователей, которые могут работать на станках
-    // ADMIN и EMPLOYEE могут работать на всех станках, MANAGER - нет
-    const availableUsers = await prisma.user.findMany({
-      where: {
-        role: {
-          in: ['ADMIN', 'EMPLOYEE'],
-        },
-      },
-      select: {
-        id: true,
-        role: true,
-      },
-    });
-
-    const availableUsersCount = availableUsers.length;
-
     // Получаем все активные задачи (не завершенные)
     const activeTasks = await prisma.productionTask.findMany({
       where: {
@@ -183,6 +205,138 @@ export class AnalyticsService {
         },
       },
     });
+
+    // Получаем уникальные ID станков из активных задач
+    const machineIds = [...new Set(activeTasks.map(t => t.machineId))];
+
+    // Для каждого станка находим сотрудников, которые работали на нем, и рассчитываем средний КПД
+    const machineEfficiencyMap: Record<string, number> = {};
+    const machineWorkersCountMap: Record<string, number> = {};
+    
+    for (const machineId of machineIds) {
+      // Находим все завершенные WorkLog для этого станка за последние 30 дней
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const workLogs = await prisma.workLog.findMany({
+        where: {
+          task: {
+            machineId: machineId,
+          },
+          startTime: {
+            gte: thirtyDaysAgo,
+          },
+          endTime: {
+            not: null,
+          },
+        },
+        include: {
+          task: {
+            include: {
+              machine: {
+                select: {
+                  efficiencyNorm: true,
+                },
+              },
+            },
+          },
+          pauses: true,
+        },
+        distinct: ['userId'],
+      });
+
+      if (workLogs.length === 0) {
+        // Если никто не работал на станке, используем базовую производительность
+        machineEfficiencyMap[machineId] = 1.0;
+        continue;
+      }
+
+      // Получаем уникальных пользователей
+      const uniqueUserIds = [...new Set(workLogs.map(wl => wl.userId))];
+      
+      // Рассчитываем КПД для каждого пользователя на этом станке
+      const userEfficiencies: number[] = [];
+      
+      for (const userId of uniqueUserIds) {
+        const userWorkLogs = await prisma.workLog.findMany({
+          where: {
+            userId: userId,
+            task: {
+              machineId: machineId,
+            },
+            startTime: {
+              gte: thirtyDaysAgo,
+            },
+            endTime: {
+              not: null,
+            },
+          },
+          include: {
+            task: {
+              include: {
+                machine: {
+                  select: {
+                    efficiencyNorm: true,
+                  },
+                },
+              },
+            },
+            pauses: true,
+          },
+        });
+
+        let totalActual = 0;
+        let totalExpected = 0;
+
+        userWorkLogs.forEach((log) => {
+          if (log.endTime) {
+            const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+            
+            // Вычитаем время всех пауз
+            let pauseTimeMs = 0;
+            if (log.pauses) {
+              log.pauses.forEach((pause) => {
+                if (pause.pauseEnd) {
+                  pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+                }
+              });
+            }
+            
+            const workDurationMs = totalDurationMs - pauseTimeMs;
+            let durationHours = workDurationMs / (1000 * 60 * 60);
+
+            // Ограничиваем время работы максимум 8 часами (стандартная смена)
+            // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+            const STANDARD_WORK_HOURS = 8;
+            if (durationHours > STANDARD_WORK_HOURS) {
+              durationHours = STANDARD_WORK_HOURS;
+            }
+
+            const actual = log.quantityProduced;
+            const expected = log.task.machine.efficiencyNorm * durationHours;
+
+            totalActual += actual;
+            totalExpected += expected;
+          }
+        });
+
+        if (totalExpected > 0) {
+          const efficiency = (totalActual / totalExpected) * 100;
+          userEfficiencies.push(efficiency);
+        }
+      }
+
+      // Рассчитываем средний КПД
+      if (userEfficiencies.length > 0) {
+        const avgEfficiency = userEfficiencies.reduce((sum, eff) => sum + eff, 0) / userEfficiencies.length;
+        machineEfficiencyMap[machineId] = avgEfficiency / 100; // Преобразуем в коэффициент (0.8 = 80%)
+      } else {
+        machineEfficiencyMap[machineId] = 1.0; // Если не удалось рассчитать, используем 100%
+      }
+
+      // Сохраняем количество работников для этого станка
+      machineWorkersCountMap[machineId] = uniqueUserIds.length || 1;
+    }
 
     // Группируем задачи по станкам
     const machineWorkload: Record<string, {
@@ -234,15 +388,26 @@ export class AnalyticsService {
         ? remainingQuantity / totalEfficiencyNorm
         : estimatedHours;
 
-      // Время с учетом количества доступных работников
-      const estimatedHoursWithWorkers = availableUsersCount > 0 
-        ? estimatedHours / availableUsersCount 
+      // Получаем средний КПД для этого станка
+      const avgEfficiency = machineEfficiencyMap[task.machineId] || 1.0;
+      
+      // Время с учетом среднего КПД сотрудников, работавших на станке
+      // Учитываем, что средний КПД влияет на фактическую производительность
+      const adjustedEfficiencyNorm = task.machine.efficiencyNorm * avgEfficiency;
+      const adjustedTotalEfficiencyNorm = adjustedEfficiencyNorm * machineQuantity;
+      
+      // Время с учетом среднего КПД (без учета количества работников)
+      const estimatedHoursWithWorkers = adjustedEfficiencyNorm > 0
+        ? remainingQuantity / adjustedEfficiencyNorm
         : estimatedHours;
 
-      // Время с учетом и количества станков, и работников
-      const estimatedHoursWithMachinesAndWorkers = totalEfficiencyNorm > 0 && availableUsersCount > 0
-        ? remainingQuantity / (totalEfficiencyNorm * availableUsersCount)
+      // Время с учетом и количества станков, и среднего КПД
+      const estimatedHoursWithMachinesAndWorkers = adjustedTotalEfficiencyNorm > 0
+        ? remainingQuantity / adjustedTotalEfficiencyNorm
         : estimatedHoursWithMachines;
+
+      // Получаем количество уникальных сотрудников, работавших на этом станке (из предварительно рассчитанной карты)
+      const availableWorkersCount = machineWorkersCountMap[task.machineId] || 1;
 
       if (!machineWorkload[task.machineId]) {
         machineWorkload[task.machineId] = {
@@ -252,7 +417,7 @@ export class AnalyticsService {
           efficiencyNorm: task.machine.efficiencyNorm,
           quantity: machineQuantity,
           totalEfficiencyNorm: totalEfficiencyNorm,
-          availableWorkersCount: availableUsersCount,
+          availableWorkersCount: availableWorkersCount,
           totalRemainingQuantity: 0,
           estimatedHours: 0,
           estimatedHoursWithWorkers: 0,
@@ -308,6 +473,8 @@ export class AnalyticsService {
       m.machineStatus === 'REPAIR' || m.machineStatus === 'REQUIRES_ATTENTION'
     ).length;
     const totalMachinesCount = workload.reduce((sum, m) => sum + m.quantity, 0); // Общее количество всех станков
+    const totalAvailableWorkers = workload.reduce((sum, m) => sum + m.availableWorkersCount, 0);
+    const avgAvailableWorkers = workload.length > 0 ? totalAvailableWorkers / workload.length : 0;
 
     return {
       machines: workload,
@@ -316,7 +483,7 @@ export class AnalyticsService {
         totalMachinesCount, // Общее количество всех станков (с учетом quantity)
         activeMachines: activeMachinesCount,
         machinesWithIssues: machinesWithIssuesCount,
-        availableWorkersCount: availableUsersCount,
+        availableWorkersCount: Math.round(avgAvailableWorkers * 10) / 10, // Среднее количество работников на станок
         totalRemainingQuantity,
         totalEstimatedHours: Math.round(totalEstimatedHours * 100) / 100,
         totalEstimatedHoursWithWorkers: Math.round(totalEstimatedHoursWithWorkers * 100) / 100,
@@ -367,6 +534,7 @@ export class AnalyticsService {
             },
           },
         },
+        pauses: true,
       },
     });
 
@@ -378,9 +546,27 @@ export class AnalyticsService {
 
     workLogs.forEach((log) => {
       if (log.endTime) {
-        const durationHours =
-          (new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) /
-          (1000 * 60 * 60);
+        const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+        
+        // Вычитаем время всех пауз
+        let pauseTimeMs = 0;
+        if (log.pauses) {
+          log.pauses.forEach((pause) => {
+            if (pause.pauseEnd) {
+              pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+            }
+          });
+        }
+        
+        const workDurationMs = totalDurationMs - pauseTimeMs;
+        let durationHours = workDurationMs / (1000 * 60 * 60);
+
+        // Ограничиваем время работы максимум 8 часами (стандартная смена)
+        // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+        const STANDARD_WORK_HOURS = 8;
+        if (durationHours > STANDARD_WORK_HOURS) {
+          durationHours = STANDARD_WORK_HOURS;
+        }
 
         const machineQuantity = log.task.machine.quantity || 1;
         const totalEfficiencyNorm = log.task.machine.efficiencyNorm * machineQuantity;
@@ -413,9 +599,27 @@ export class AnalyticsService {
     workLogs.forEach((log) => {
       if (log.endTime) {
         const dateKey = new Date(log.startTime).toISOString().split('T')[0];
-        const durationHours =
-          (new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) /
-          (1000 * 60 * 60);
+        const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+        
+        // Вычитаем время всех пауз
+        let pauseTimeMs = 0;
+        if (log.pauses) {
+          log.pauses.forEach((pause) => {
+            if (pause.pauseEnd) {
+              pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+            }
+          });
+        }
+        
+        const workDurationMs = totalDurationMs - pauseTimeMs;
+        let durationHours = workDurationMs / (1000 * 60 * 60);
+
+        // Ограничиваем время работы максимум 8 часами (стандартная смена)
+        // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+        const STANDARD_WORK_HOURS = 8;
+        if (durationHours > STANDARD_WORK_HOURS) {
+          durationHours = STANDARD_WORK_HOURS;
+        }
 
         if (!dailyStats[dateKey]) {
           dailyStats[dateKey] = {
@@ -467,9 +671,27 @@ export class AnalyticsService {
     workLogs.forEach((log) => {
       if (log.endTime) {
         const machineId = log.task.machine.id;
-        const durationHours =
-          (new Date(log.endTime).getTime() - new Date(log.startTime).getTime()) /
-          (1000 * 60 * 60);
+        const totalDurationMs = new Date(log.endTime).getTime() - new Date(log.startTime).getTime();
+        
+        // Вычитаем время всех пауз
+        let pauseTimeMs = 0;
+        if (log.pauses) {
+          log.pauses.forEach((pause) => {
+            if (pause.pauseEnd) {
+              pauseTimeMs += new Date(pause.pauseEnd).getTime() - new Date(pause.pauseStart).getTime();
+            }
+          });
+        }
+        
+        const workDurationMs = totalDurationMs - pauseTimeMs;
+        let durationHours = workDurationMs / (1000 * 60 * 60);
+
+        // Ограничиваем время работы максимум 8 часами (стандартная смена)
+        // Все, что больше 8 часов, считается переработкой и не учитывается в расчете КПД
+        const STANDARD_WORK_HOURS = 8;
+        if (durationHours > STANDARD_WORK_HOURS) {
+          durationHours = STANDARD_WORK_HOURS;
+        }
 
         if (!machineStats[machineId]) {
           machineStats[machineId] = {

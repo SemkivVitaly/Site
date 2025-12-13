@@ -3,7 +3,8 @@ import { TaskStatus, Priority } from '@prisma/client';
 
 export interface AssignTaskDto {
   taskId: string;
-  userId?: string; // null for "general queue"
+  userId?: string; // null for "general queue" (оставляем для обратной совместимости)
+  userIds?: string[]; // Новое поле для множественных назначений
   priority?: Priority;
 }
 
@@ -63,6 +64,17 @@ export class TasksService {
             lastName: true,
           },
         },
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [
         { priority: 'desc' },
@@ -97,6 +109,17 @@ export class TasksService {
             lastName: true,
           },
         },
+        assignments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
         workLogs: {
           include: {
             user: {
@@ -129,23 +152,18 @@ export class TasksService {
     }
 
     const updateData: UpdateTaskDto = {
-      assignedUserId: data.userId || null,
+      assignedUserId: data.userId || null, // Оставляем для обратной совместимости
     };
 
     if (data.priority) {
       updateData.priority = data.priority;
     }
 
-    return prisma.productionTask.update({
+    // Обновляем задачу
+    const updatedTask = await prisma.productionTask.update({
       where: { id: data.taskId },
       data: updateData,
       include: {
-        order: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
         machine: {
           select: {
             id: true,
@@ -162,6 +180,58 @@ export class TasksService {
         },
       },
     });
+
+    // Если указаны userIds, обновляем множественные назначения
+    if (data.userIds !== undefined) {
+      // Удаляем все существующие назначения
+      await prisma.taskAssignment.deleteMany({
+        where: { taskId: data.taskId },
+      });
+
+      // Создаем новые назначения
+      if (data.userIds.length > 0) {
+        await prisma.taskAssignment.createMany({
+          data: data.userIds.map((userId) => ({
+            taskId: data.taskId,
+            userId,
+          })),
+        });
+      }
+
+      // Загружаем обновленную задачу с назначениями
+      return prisma.productionTask.findUnique({
+        where: { id: data.taskId },
+        include: {
+          machine: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+            },
+          },
+          assignedUser: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          assignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    return updatedTask;
   }
 
   async updateTask(id: string, data: UpdateTaskDto) {
@@ -200,19 +270,13 @@ export class TasksService {
   }
 
   async getAvailableTasks(userId?: string) {
-    // Get tasks that are either unassigned or assigned to specific user
+    // Get all tasks with status PENDING or IN_PROGRESS, regardless of assignment
+    // This allows employees to see all tasks for each order, even if someone already took them
     const where: any = {
-      status: 'PENDING',
+      status: {
+        in: ['PENDING', 'IN_PROGRESS'],
+      },
     };
-
-    if (userId) {
-      where.OR = [
-        { assignedUserId: null },
-        { assignedUserId: userId },
-      ];
-    } else {
-      where.assignedUserId = null;
-    }
 
     // Exclude tasks on broken machines
     const tasks = await prisma.productionTask.findMany({
@@ -243,6 +307,8 @@ export class TasksService {
         },
       },
       orderBy: [
+        { order: { priority: 'desc' } },
+        { order: { deadline: 'asc' } },
         { priority: 'desc' },
         { createdAt: 'asc' },
       ],

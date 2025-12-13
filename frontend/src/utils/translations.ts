@@ -44,7 +44,7 @@ export const translateMachineStatus = (status: string): string => {
 
 export const translateIncidentType = (type: string): string => {
   const translations: Record<string, string> = {
-    MACHINE_BREAKDOWN: 'Поломка станка',
+    MACHINE_BREAKDOWN: 'Помощь со станком',
     TASK_QUESTION: 'Вопрос по задаче',
   };
   return translations[type] || type;

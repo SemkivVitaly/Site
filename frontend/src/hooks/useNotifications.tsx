@@ -3,6 +3,8 @@ import { io, Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { playNotificationSound } from '../utils/notificationSound';
+import { showPushNotification } from '../utils/pushNotifications';
 
 interface Notification {
   type: string;
@@ -34,14 +36,13 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!token || !user) return;
 
-    // Socket.io работает на корневом домене, без /api
-    const getSocketUrl = () => {
-      const envUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      // Убираем /api если есть
-      return envUrl.replace(/\/api\/?$/, '');
-    };
+    // Для socket.io используем тот же домен, что и фронтенд (через Caddy)
+    // Если REACT_APP_API_URL относительный (/api), используем window.location.origin
+    const socketUrl = process.env.REACT_APP_API_URL?.startsWith('/') 
+      ? window.location.origin 
+      : (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace('/api', '');
 
-    const newSocket = io(getSocketUrl(), {
+    const newSocket = io(socketUrl, {
       auth: { token },
     });
 
@@ -49,8 +50,22 @@ export const useNotifications = () => {
       console.log('Socket connected');
     });
 
-    newSocket.on(`notification:${user.id}`, (notification: Notification) => {
+    newSocket.on(`notification:${user.id}`, async (notification: Notification) => {
       setNotifications((prev) => [notification, ...prev]);
+      
+      // Воспроизводим звук уведомления
+      playNotificationSound();
+      
+      // Показываем пуш-уведомление
+      await showPushNotification(notification.message, {
+        body: notification.type === 'TASK_ASSIGNED' 
+          ? `Операция: ${notification.task?.operation || ''}`
+          : notification.type === 'INCIDENT_CREATED'
+          ? `Тип: ${notification.incident?.type || ''}`
+          : '',
+        tag: notification.type,
+        data: notification,
+      });
       
       // Show notification to user
       if (notification.type === 'TASK_ASSIGNED') {
@@ -68,12 +83,19 @@ export const useNotifications = () => {
       }
     });
 
-    newSocket.on('incident:assigned', (data) => {
+    newSocket.on('incident:assigned', async (data) => {
       const notification = {
         type: 'INCIDENT_ASSIGNED',
         message: `${data.resolverName} взял инцидент в работу`,
       };
       setNotifications((prev) => [notification, ...prev]);
+      
+      // Воспроизводим звук только если пользователь - начальник производства или настройщик
+      if (user?.role === 'ADMIN' || (user?.role === 'EMPLOYEE' && user?.tags && Array.isArray(user.tags) && user.tags.includes('Настройщик'))) {
+        playNotificationSound();
+        await showPushNotification(notification.message);
+      }
+      
       showInfo(notification.message);
     });
 

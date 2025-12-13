@@ -24,6 +24,15 @@ export interface ProductionTask {
     firstName: string;
     lastName: string;
   };
+  assignments?: Array<{
+    id: string;
+    userId: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+    };
+  }>;
   order?: {
     id: string;
     title: string;
@@ -42,7 +51,8 @@ export interface CreateTaskDto {
   totalQuantity: number;
   priority?: string;
   sequence: number;
-  assignedUserId?: string;
+  assignedUserId?: string; // Оставляем для обратной совместимости
+  assignedUserIds?: string[]; // Новое поле для множественных назначений
 }
 
 export interface CreateTechCardDto {

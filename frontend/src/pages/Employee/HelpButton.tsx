@@ -92,7 +92,7 @@ const HelpButton: React.FC = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Тип проблемы</InputLabel>
             <Select value={type} onChange={(e) => setType(e.target.value as IncidentType)}>
-              <MenuItem value={IncidentType.MACHINE_BREAKDOWN}>Сломался станок</MenuItem>
+              <MenuItem value={IncidentType.MACHINE_BREAKDOWN}>Помощь со станком</MenuItem>
               <MenuItem value={IncidentType.TASK_QUESTION}>Вопрос по задаче</MenuItem>
             </Select>
           </FormControl>

@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -79,7 +80,8 @@ model User {
 
   // Relations
   orders        Order[]           @relation("OrderManager")
-  assignedTasks ProductionTask[]
+  assignedTasks ProductionTask[] @relation("TaskAssignedUser")
+  taskAssignments TaskAssignment[] @relation("TaskAssignments")
   workLogs      WorkLog[]
   shifts        Shift[]
   incidents     Incident[]        @relation("IncidentCreator")
@@ -140,7 +142,7 @@ model ProductionTask {
   id                String     @id @default(cuid())
   orderId           String
   machineId         String
-  assignedUserId    String?
+  assignedUserId    String?   // Оставляем для обратной совместимости
   status            TaskStatus @default(PENDING)
   operation         String     // название операции
   totalQuantity     Int
@@ -154,7 +156,8 @@ model ProductionTask {
   // Relations
   order       Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
   machine     Machine    @relation(fields: [machineId], references: [id])
-  assignedUser User?     @relation(fields: [assignedUserId], references: [id])
+  assignedUser User?     @relation("TaskAssignedUser", fields: [assignedUserId], references: [id])
+  assignments TaskAssignment[] // Множественные назначения
   workLogs    WorkLog[]
   comments    TaskComment[]
   materials   TaskMaterial[]
@@ -164,6 +167,21 @@ model ProductionTask {
   @@index([assignedUserId])
   @@index([status])
   @@index([priority])
+}
+
+model TaskAssignment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  task ProductionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User           @relation("TaskAssignments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
 }
 
 model WorkLog {
@@ -179,10 +197,25 @@ model WorkLog {
   // Relations
   task ProductionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User           @relation(fields: [userId], references: [id])
+  pauses WorkLogPause[]
 
   @@index([taskId])
   @@index([userId])
   @@index([startTime])
+}
+
+model WorkLogPause {
+  id                String   @id @default(cuid())
+  workLogId         String
+  pauseStart        DateTime
+  pauseEnd          DateTime?
+  createdAt         DateTime  @default(now())
+
+  // Relations
+  workLog WorkLog @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+
+  @@index([workLogId])
+  @@index([pauseStart])
 }
 
 model Shift {

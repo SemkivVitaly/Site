@@ -1,20 +1,483 @@
+/* ============================================
+   ГЛОБАЛЬНЫЕ СТИЛИ И CSS ПЕРЕМЕННЫЕ
+   ============================================ */
+
+:root {
+  /* Цветовая палитра */
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark: #4f46e5;
+  --color-secondary: #ec4899;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-border: rgba(0, 0, 0, 0.06);
+  
+  /* Отступы */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Закругления */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* Тени */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Переходы */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Breakpoints */
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1536px;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  font-size: clamp(14px, 1vw, 16px);
+  scroll-behavior: smooth;
+  height: 100%;
+  width: 100%;
+}
+
+/* Исправление для мобильных устройств с проблемами viewport (iOS, Huawei и др.) */
+@supports (-webkit-touch-callout: none) {
+  html {
+    height: -webkit-fill-available;
+  }
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 
+    'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+/* Разрешаем горизонтальную прокрутку только для контейнеров с контентом */
+@media (max-width: 960px) {
+  body {
+    overflow-x: hidden;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ============================================
+   АДАПТИВНЫЕ ИЗОБРАЖЕНИЯ
+   ============================================ */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================
+   АДАПТИВНАЯ ТИПОГРАФИКА
+   ============================================ */
+
+@media (max-width: 360px) {
+  html {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 361px) and (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 481px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* ============================================
+   TOUCH ОПТИМИЗАЦИЯ
+   ============================================ */
+
+@media (max-width: 960px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  button,
+  a,
+  [role="button"],
+  .MuiButton-root,
+  .MuiIconButton-root {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* КРИТИЧЕСКИ ВАЖНО: Разрешаем горизонтальную прокрутку для всех контейнеров с контентом */
+  .MuiTableContainer-root,
+  [class*="TableContainer"],
+  [class*="table-container"],
+  [class*="scroll-container"],
+  .kanban-scroll-wrapper,
+  [class*="kanban"],
+  [class*="Kanban"],
+  .MuiBox-root[style*="overflow-x: auto"],
+  .MuiBox-root[style*="overflowX: 'auto'"],
+  [style*="overflow-x: auto"],
+  [style*="overflowX: 'auto'"] {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1) !important;
+    position: relative !important;
+    width: 100% !important;
+  }
+  
+  /* Улучшенные скроллбары для мобильных */
+  .MuiTableContainer-root::-webkit-scrollbar,
+  .kanban-scroll-wrapper::-webkit-scrollbar,
+  [class*="TableContainer"]::-webkit-scrollbar {
+    height: 16px !important;
+    display: block !important;
+    -webkit-appearance: none !important;
+    background: transparent !important;
+  }
+  
+  .MuiTableContainer-root::-webkit-scrollbar-track,
+  .kanban-scroll-wrapper::-webkit-scrollbar-track,
+  [class*="TableContainer"]::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+    margin: 2px !important;
+  }
+  
+  .MuiTableContainer-root::-webkit-scrollbar-thumb,
+  .kanban-scroll-wrapper::-webkit-scrollbar-thumb,
+  [class*="TableContainer"]::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+    border: 3px solid rgba(255, 255, 255, 0.9) !important;
+    min-height: 24px !important;
+  }
+  
+  .MuiTableContainer-root::-webkit-scrollbar-thumb:hover,
+  .kanban-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+  [class*="TableContainer"]::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.7) !important;
+  }
+}
+
+/* ============================================
+   АДАПТИВНЫЕ ТАБЛИЦЫ
+   ============================================ */
+
+.MuiTableContainer-root {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.1);
+  position: relative;
+  width: 100%;
+}
+
+.MuiTableContainer-root::-webkit-scrollbar {
+  height: 14px !important;
+  display: block !important;
+  -webkit-appearance: none !important;
+}
+
+.MuiTableContainer-root::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-radius: 7px !important;
+  margin: 2px !important;
+}
+
+.MuiTableContainer-root::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border-radius: 7px !important;
+  border: 3px solid rgba(255, 255, 255, 0.9) !important;
+  min-height: 20px !important;
+}
+
+.MuiTableContainer-root::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+@media (max-width: 600px) {
+  .MuiTable-root {
+    min-width: 600px;
+  }
+  
+  .MuiTableCell-root {
+    padding: 12px 8px;
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   KANBAN BOARD
+   ============================================ */
+
+.kanban-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.kanban-scroll-wrapper {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1);
+  touch-action: pan-x pan-y !important;
+  position: relative;
+  width: 100%;
+}
+
+.kanban-scroll-wrapper::-webkit-scrollbar {
+  height: 14px !important;
+  display: block !important;
+  -webkit-appearance: none !important;
+}
+
+.kanban-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-radius: 7px !important;
+  margin: 2px !important;
+}
+
+.kanban-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border-radius: 7px !important;
+  border: 3px solid rgba(255, 255, 255, 0.9) !important;
+  min-height: 20px !important;
+}
+
+.kanban-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+.kanban-column {
+  flex-shrink: 0;
+  height: fit-content;
+}
+
+@media (max-width: 480px) {
+  .kanban-column {
+    min-width: 200px;
+    width: 200px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .kanban-column {
+    min-width: 240px;
+    width: 240px;
+  }
+}
+
+@media (min-width: 769px) {
+  .kanban-column {
+    min-width: 300px;
+    width: auto;
+    flex: 1;
+  }
+}
+
+/* ============================================
+   АДАПТИВНЫЕ СТИЛИ ДЛЯ КОМПОНЕНТОВ
+   ============================================ */
+
+@media (max-width: 600px) {
+  .MuiContainer-root {
+    padding-left: 8px;
+    padding-right: 8px;
+    overflow-x: visible;
+  }
+  
+  /* Разрешаем горизонтальную прокрутку для контента внутри контейнеров */
+  .MuiContainer-root > * {
+    overflow-x: visible;
+  }
+  
+  .MuiCard-root {
+    margin: 8px 0;
+  }
+  
+  .MuiCardContent-root {
+    padding: 16px;
+  }
+  
+  .MuiDialog-paper {
+    margin: 16px;
+    max-width: calc(100% - 32px);
+  }
+  
+  .MuiDialogContent-root {
+    padding: 16px;
+  }
+  
+  .MuiDialogActions-root {
+    padding: 12px 16px;
+  }
+  
+  .MuiTabs-root {
+    min-height: 48px;
+  }
+  
+  .MuiTab-root {
+    min-width: 72px;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   ПРОИЗВОДИТЕЛЬНОСТЬ И ОПТИМИЗАЦИЯ
+   ============================================ */
+
+.MuiPaper-root,
+.MuiCard-root,
+.MuiDialog-paper {
+  will-change: transform;
+}
+
+/* Предотвращение горизонтального скролла на корневом уровне */
+#root {
+  max-width: 100vw;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Разрешаем горизонтальную прокрутку для контейнеров с таблицами и канбан доской */
+@media (max-width: 960px) {
+  /* Контейнеры с таблицами должны прокручиваться горизонтально */
+  .MuiTableContainer-root,
+  [class*="TableContainer"],
+  [style*="overflow-x: auto"],
+  [style*="overflowX: 'auto'"] {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Канбан доска должна прокручиваться горизонтально */
+  [class*="kanban"],
+  [class*="Kanban"],
+  .kanban-scroll-wrapper {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+  }
+  
+  /* Все Box с overflow-x: auto */
+  .MuiBox-root[style*="overflow-x: auto"],
+  .MuiBox-root[style*="overflowX: 'auto'"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+  }
+}
+
+/* ============================================
+   КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ ДЛЯ ГОРИЗОНТАЛЬНОЙ ПРОКРУТКИ
+   ============================================ */
+
+/* Убеждаемся, что контейнеры не блокируют горизонтальную прокрутку */
+.MuiContainer-root {
+  overflow-x: visible !important;
+}
+
+/* Разрешаем горизонтальную прокрутку для всех страниц на мобильных */
+@media (max-width: 960px) {
+  /* Убираем ограничения ширины для контента, который должен прокручиваться */
+  .MuiContainer-root {
+    max-width: 100% !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  /* Разрешаем горизонтальную прокрутку для всех дочерних элементов */
+  .MuiContainer-root > * {
+    overflow-x: visible !important;
+  }
+  
+  /* Специально для страниц с таблицами */
+  [class*="Dashboard"],
+  [class*="Workload"],
+  [class*="Statistics"] {
+    overflow-x: visible !important;
+  }
+}
+
+/* Улучшение для печати */
+@media print {
+  .MuiDrawer-root,
+  .MuiAppBar-root,
+  .MuiFab-root,
+  button {
+    display: none !important;
+  }
+  
+  .MuiContainer-root {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
 }
 

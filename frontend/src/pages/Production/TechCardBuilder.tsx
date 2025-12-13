@@ -22,6 +22,7 @@ import {
   Chip,
   Checkbox,
   FormControlLabel,
+  OutlinedInput,
 } from '@mui/material';
 import { Add, Delete, ArrowUpward, ArrowDownward, Edit } from '@mui/icons-material';
 import { productionApi, ProductionTask, CreateTaskDto } from '../../api/production.api';
@@ -51,6 +52,7 @@ const TechCardBuilder: React.FC = () => {
     priority: Priority.MEDIUM,
     sequence: 1,
     assignedUserId: undefined,
+    assignedUserIds: [],
   });
   const [useCustomOperation, setUseCustomOperation] = useState(false);
 
@@ -91,6 +93,9 @@ const TechCardBuilder: React.FC = () => {
       const machineCapabilities = getMachineCapabilities(task.machineId);
       const isCustomOperation = !machineCapabilities.includes(task.operation);
       
+      // Извлекаем assignedUserIds из assignments, если они есть
+      const assignedUserIds = task.assignments?.map(a => a.userId) || [];
+      
       setFormData({
         machineId: task.machineId,
         operation: task.operation,
@@ -98,6 +103,7 @@ const TechCardBuilder: React.FC = () => {
         priority: task.priority as Priority,
         sequence: task.sequence,
         assignedUserId: task.assignedUserId || undefined,
+        assignedUserIds: assignedUserIds,
       });
       setUseCustomOperation(isCustomOperation);
     } else {
@@ -110,6 +116,7 @@ const TechCardBuilder: React.FC = () => {
         priority: Priority.MEDIUM,
         sequence: tasks.length + 1,
         assignedUserId: undefined,
+        assignedUserIds: [],
       });
       setUseCustomOperation(false);
     }
@@ -266,11 +273,15 @@ const TechCardBuilder: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     Количество: {task.completedQuantity} / {task.totalQuantity} шт
                   </Typography>
-                  {task.assignedUser && (
+                  {(task.assignments && task.assignments.length > 0) ? (
+                    <Typography variant="body2" color="text.secondary">
+                      Исполнители: {task.assignments.map(a => `${a.user.firstName} ${a.user.lastName}`).join(', ')}
+                    </Typography>
+                  ) : task.assignedUser ? (
                     <Typography variant="body2" color="text.secondary">
                       Исполнитель: {task.assignedUser.firstName} {task.assignedUser.lastName}
                     </Typography>
-                  )}
+                  ) : null}
                 </Box>
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                   <IconButton
@@ -419,17 +430,32 @@ const TechCardBuilder: React.FC = () => {
           </FormControl>
 
           <FormControl fullWidth margin="normal">
-            <InputLabel>Назначить сотрудника</InputLabel>
+            <InputLabel>Назначить сотрудников</InputLabel>
             <Select
-              value={formData.assignedUserId || ''}
-              onChange={(e) => setFormData({ ...formData, assignedUserId: e.target.value || undefined })}
+              multiple
+              value={formData.assignedUserIds || []}
+              onChange={(e) => {
+                const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                setFormData({ ...formData, assignedUserIds: value as string[] });
+              }}
+              input={<OutlinedInput label="Назначить сотрудников" />}
+              renderValue={(selected) => {
+                if (!selected || selected.length === 0) {
+                  return <em>Не назначать</em>;
+                }
+                return selected
+                  .map((userId) => {
+                    const employee = employees.find((e) => e.id === userId);
+                    return employee ? `${employee.firstName} ${employee.lastName}` : '';
+                  })
+                  .filter(Boolean)
+                  .join(', ');
+              }}
             >
-              <MenuItem value="">
-                <em>Не назначать</em>
-              </MenuItem>
               {employees.map((employee) => (
                 <MenuItem key={employee.id} value={employee.id}>
-                  {employee.firstName} {employee.lastName}
+                  <Checkbox checked={(formData.assignedUserIds || []).indexOf(employee.id) > -1} />
+                  <ListItemText primary={`${employee.firstName} ${employee.lastName}`} />
                 </MenuItem>
               ))}
             </Select>

@@ -1,0 +1,32 @@
+{
+    auto_https disable_redirects
+    http_port 8081
+}
+
+http://localhost:8081 {
+    # Отключаем HSTS и принудительный HTTPS
+    header {
+        Strict-Transport-Security "max-age=0"
+        -Strict-Transport-Security
+    }
+    
+    # Проксируем WebSocket для socket.io на бэкенд
+    handle /socket.io/* {
+        reverse_proxy http://localhost:5000 {
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
+
+    # Проксируем API на бэкенд
+    handle /api/* {
+        reverse_proxy http://localhost:5000
+    }
+
+    # Остальное — фронт (SPA)
+    handle {
+        root * C:\Users\vital\Типография\frontend\build
+        try_files {path} /index.html
+        file_server
+    }
+}
